@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Pattern Reflex - 1초 패턴 회화 트레이너</title>
+  <title>Pattern Reflex - 스피킹 트레이너</title>
   <style>
     :root {
       --primary: #4f46e5;
@@ -16,6 +16,8 @@
       --accent: #ef4444;
       --success: #10b981;
       --warning: #f59e0b;
+      --snow: #0284c7;
+      --mastery: #8b5cf6;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
@@ -28,7 +30,7 @@
     }
     .app-container {
       width: 100%;
-      max-width: 500px;
+      max-width: 520px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -51,8 +53,8 @@
       color: var(--primary);
     }
     .api-badge {
-      font-size: 12px;
-      padding: 5px 10px;
+      font-size: 11px;
+      padding: 5px 9px;
       border-radius: 6px;
       cursor: pointer;
       background: #e0e7ff;
@@ -61,22 +63,27 @@
     }
     .tabs {
       display: flex;
-      gap: 6px;
+      gap: 2px;
       background: #e2e8f0;
       padding: 4px;
       border-radius: 10px;
+      overflow-x: auto;
     }
     .tab-btn {
       flex: 1;
-      padding: 9px 4px;
+      min-width: 68px;
+      padding: 8px 2px;
       border: none;
       background: transparent;
       border-radius: 8px;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--muted);
       cursor: pointer;
       transition: all 0.2s;
+      text-align: center;
+      line-height: 1.2;
+      white-space: nowrap;
     }
     .tab-btn.active {
       background: var(--card);
@@ -89,9 +96,10 @@
       padding: 12px 14px;
       border-radius: 8px;
       border: 1px solid var(--border);
-      font-size: 15px;
+      font-size: 14px;
       margin-top: 6px;
       outline: none;
+      font-family: inherit;
     }
     input:focus, textarea:focus {
       border-color: var(--primary);
@@ -101,7 +109,7 @@
       padding: 13px;
       border-radius: 8px;
       border: none;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -113,9 +121,25 @@
     .btn-primary { background: var(--primary); color: white; margin-top: 10px; }
     .btn-primary:active { background: var(--primary-hover); transform: scale(0.99); }
     .btn-success { background: var(--success); color: white; margin-top: 10px; }
-    .btn-sm { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
+    .btn-warning { background: var(--warning); color: white; margin-top: 10px; }
+    .btn-snow { background: var(--snow); color: white; margin-top: 10px; }
+    .btn-sm { width: auto; padding: 6px 10px; font-size: 12px; margin: 0; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-re-drill {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
     
-    .drill-target {
+    .target-box {
       display: flex;
       flex-direction: column;
       gap: 3px;
@@ -130,7 +154,7 @@
       text-transform: uppercase;
     }
     .target-pattern {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
       color: #1e1b4b;
     }
@@ -138,31 +162,59 @@
       font-size: 13px;
       color: var(--muted);
     }
+    
     .prompt-box {
       background: #f1f5f9;
       border-left: 4px solid var(--primary);
-      padding: 14px;
+      padding: 13px;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      line-height: 1.4;
+      line-height: 1.45;
       margin-bottom: 12px;
+      white-space: pre-line;
     }
     
-    /* Voice Input Box */
+    /* Sub Mode Segment Control */
+    .segment-bar {
+      display: flex;
+      gap: 6px;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .segment-btn {
+      flex: 1;
+      padding: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .segment-btn.active {
+      background: #ffffff;
+      color: var(--snow);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    
+    /* Input & Voice Controls */
     .input-row {
       display: flex;
       gap: 8px;
       align-items: center;
       margin-top: 6px;
     }
-    .input-row input {
+    .input-row input, .input-row textarea {
       margin-top: 0;
       flex: 1;
     }
     .mic-btn {
-      width: 48px;
-      height: 48px;
+      width: 46px;
+      height: 46px;
       border-radius: 10px;
       border: 1px solid var(--border);
       background: #ffffff;
@@ -198,35 +250,22 @@
     .feedback-box.suggest { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
     
     .recommendation-card {
-      margin-top: 12px;
+      margin-top: 10px;
       background: #f0fdf4;
       border: 1px dashed var(--success);
       padding: 12px;
       border-radius: 8px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-    }
-    .recommend-header {
-      font-size: 12px;
-      font-weight: 700;
-      color: #15803d;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .recommend-body {
-      font-size: 14px;
-      font-weight: 600;
-      color: #14532d;
+      gap: 6px;
     }
     .btn-add-pattern {
       background: var(--success);
       color: white;
       border: none;
       border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 13px;
+      padding: 7px 11px;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
@@ -243,7 +282,6 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      position: relative;
     }
     .list-item .item-head {
       display: flex;
@@ -258,7 +296,7 @@
       color: #94a3b8;
       cursor: pointer;
       font-size: 18px;
-      padding: 4px 8px;
+      padding: 2px 6px;
     }
     .delete-btn:hover { color: var(--accent); }
     .badge {
@@ -270,6 +308,16 @@
       color: #475569;
       font-weight: 600;
     }
+    .badge-need {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .badge-mastered {
+      background: #ede9fe;
+      color: #7c3aed;
+      border: 1px solid #c4b5fd;
+    }
     .tts-btn {
       cursor: pointer;
       display: inline-flex;
@@ -277,6 +325,13 @@
       margin-left: 4px;
       font-size: 14px;
       user-select: none;
+    }
+    .sync-box {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
     }
   </style>
 </head>
@@ -292,189 +347,315 @@
     
     <!-- API Setting Area -->
     <div id="apiConfig" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
-      <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">
-        Google AI Studio 무료 API Key를 입력하세요.
-      </div>
+      <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Google AI Studio 무료 API Key를 입력하세요.</div>
       <input type="password" id="apiKeyInput" placeholder="AIzaSy... 로 시작하는 API 키 붙여넣기" />
       <div style="display:flex; gap:6px; margin-top:8px;">
         <button class="btn btn-primary" style="margin:0; flex:1;" onclick="testAndSaveApiKey()">연결 테스트 & 저장</button>
-        <button class="btn btn-sm" style="background:#e2e8f0; color:#475569;" onclick="toggleApiSettings()">닫기</button>
+        <button class="btn btn-sm btn-secondary" onclick="toggleApiSettings()">닫기</button>
       </div>
       <div id="apiTestStatus" style="font-size:12px; margin-top:6px; font-weight:600;"></div>
     </div>
   </div>
 
-  <!-- Tabs -->
+  <!-- Tabs: 3-Step Spiral Framework -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('drill')">🎯 1초 훈련</button>
-    <button class="tab-btn" onclick="showTab('patterns')">📚 내 패턴 (<span id="patternCount">0</span>)</button>
-    <button class="tab-btn" onclick="showTab('mistakes')">📝 오답노트 (<span id="mistakeCount">0</span>)</button>
+    <button class="tab-btn active" onclick="showTab('drill')">1단계: 익히기</button>
+    <button class="tab-btn" onclick="showTab('blind')">2단계: 실전인출</button>
+    <button class="tab-btn" onclick="showTab('snowball')">3단계: 눈덩이결합</button>
+    <button class="tab-btn" onclick="showTab('patterns')">내 패턴 (<span id="patternCount">0</span>)</button>
+    <button class="tab-btn" onclick="showTab('mistakes')">오답 (<span id="mistakeCount">0</span>)</button>
+    <button class="tab-btn" onclick="showTab('sync')">📲 연동</button>
   </div>
 
-  <!-- 1. Drill Tab -->
+  <!-- 1. Step 1: Guided Drill (단일 패턴 보면서 훈련) -->
   <div id="drillSection" class="card">
-    <div id="emptyPatternWarning" class="hidden" style="text-align: center; padding: 24px 8px;">
-      <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">등록된 패턴이 없습니다!</div>
-      <div style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">[내 패턴] 탭에서 연습하고 싶은 표현을 추가해보세요.</div>
-      <button class="btn btn-primary" onclick="showTab('patterns')">패턴 추가하러 가기</button>
+    <div class="target-box">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="target-chip">1단계: 패턴 집중 훈련</span>
+        <span class="badge" id="drillStreakBadge">훈련 중</span>
+      </div>
+      <div class="target-pattern" id="currentTargetPattern">-</div>
+      <div class="target-meaning" id="currentTargetMeaning">-</div>
     </div>
 
-    <div id="drillPlayArea">
-      <div class="drill-target">
-        <span class="target-chip">Target Pattern</span>
-        <div class="target-pattern" id="currentTargetPattern">I was thinking of -ing</div>
-        <div class="target-meaning" id="currentTargetMeaning">~할까 생각 중이야 (확정 전 고민/제안)</div>
+    <div style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px;">상황 제시 (패턴을 붙여 말해보세요)</div>
+    <div class="prompt-box" id="currentKoreanSentence">문장 로딩 중...</div>
+
+    <div class="input-row">
+      <input type="text" id="userInput" placeholder="영어로 즉시 뱉어보세요" onkeypress="if(event.key==='Enter') submitAnswer('drill');" />
+      <button class="mic-btn" id="micBtn1" onclick="toggleSpeechRecognition('userInput', 'micBtn1')">🎙️</button>
+    </div>
+    <div id="speechStatus1" style="font-size: 11px; color: var(--muted); margin-top: 4px;"></div>
+
+    <button class="btn btn-primary" id="btnSubmitDrill" onclick="submitAnswer('drill')">제출 & AI 정밀 채점</button>
+
+    <div id="feedbackContainerDrill" class="hidden">
+      <div id="feedbackTextDrill" class="feedback-box"></div>
+      
+      <!-- Action Row: Re-Drill & Recommend -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <button class="btn-re-drill" id="btnReDrill1" onclick="markForReDrill(currentDrillData.patternId)">
+          🔁 이 패턴 아직 미숙함 (계속 집중 훈련)
+        </button>
       </div>
 
-      <div style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px;">상황 제시 (마이크 버튼을 누르고 바로 말해보세요)</div>
-      <div class="prompt-box" id="currentKoreanSentence">문장 로딩 중...</div>
-
-      <!-- Input + Voice Mic Row -->
-      <div class="input-row">
-        <input type="text" id="userInput" placeholder="영어로 즉시 뱉어보세요" onkeypress="if(event.key==='Enter') submitAnswer();" />
-        <button class="mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="음성으로 말하기">🎙️</button>
+      <div id="recommendAreaDrill" class="recommendation-card hidden">
+        <div style="font-size: 12px; font-weight: 700; color: #15803d;">✨ 원어민 추천 표현</div>
+        <div style="font-size: 14px; font-weight: 600; color: #14532d;" id="recommendPatternTextDrill">-</div>
+        <div style="font-size: 12px; color: #166534;" id="recommendMeaningTextDrill">-</div>
+        <button class="btn-add-pattern" onclick="addRecommendedPattern()">➕ 내 단어장에 즉시 추가</button>
       </div>
-      <div id="speechStatus" style="font-size: 11px; color: var(--muted); margin-top: 4px; padding-left: 2px;"></div>
 
-      <button class="btn btn-primary" id="btnSubmit" onclick="submitAnswer()">제출 & AI 정밀 채점</button>
-
-      <!-- Feedback Area -->
-      <div id="feedbackContainer" class="hidden">
-        <div id="feedbackText" class="feedback-box"></div>
-        
-        <!-- Recommendation Area -->
-        <div id="recommendArea" class="recommendation-card hidden">
-          <div class="recommend-header">
-            <span>✨ 원어민 추천 패턴 발견</span>
-            <span class="badge">원터치 추가</span>
-          </div>
-          <div class="recommend-body" id="recommendPatternText">-</div>
-          <div style="font-size: 12px; color: #166534;" id="recommendMeaningText">-</div>
-          <button class="btn-add-pattern" id="btnAddRecommend" onclick="addRecommendedPattern()">
-            ➕ 이 패턴 내 단어장에 즉시 추가
-          </button>
-        </div>
-
-        <button class="btn btn-success" id="btnNextDrill" onclick="nextDrill()">다음 문장 훈련 ➔</button>
-      </div>
+      <button class="btn btn-success" onclick="loadNextDrill()">다음 문장 훈련 ➔</button>
     </div>
   </div>
 
-  <!-- 2. Patterns Tab -->
+  <!-- 2. Step 2: Blind Reflex Test (패턴 완전 미노출 1문장) -->
+  <div id="blindSection" class="card hidden">
+    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: white; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #c7d2fe; font-weight: 700;">
+        <span>⚡ 2단계: 실전 반사 인출 (패턴 미노출)</span>
+        <button class="btn-sm" style="background: rgba(255,255,255,0.2); color:white; border:none; border-radius:6px; cursor:pointer;" onclick="revealHint()">💡 1.5초 힌트</button>
+      </div>
+      <div id="blindHintBox" class="hidden" style="margin-top:8px; font-size:13px; font-weight:700; color:#fde047; text-align:center;"></div>
+    </div>
+
+    <div style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px;">상황 제시 (어떤 패턴을 쓸지 스스로 판단하세요)</div>
+    <div class="prompt-box" id="blindKoreanSentence" style="border-left-color: #8b5cf6;">실전 문장 로딩 중...</div>
+
+    <div class="input-row">
+      <input type="text" id="blindUserInput" placeholder="떠오르는 패턴으로 즉시 말하세요" onkeypress="if(event.key==='Enter') submitAnswer('blind');" />
+      <button class="mic-btn" id="micBtn2" onclick="toggleSpeechRecognition('blindUserInput', 'micBtn2')">🎙️</button>
+    </div>
+    <div id="speechStatus2" style="font-size: 11px; color: var(--muted); margin-top: 4px;"></div>
+
+    <button class="btn btn-primary" style="background:#8b5cf6;" id="btnSubmitBlind" onclick="submitAnswer('blind')">실전 답안 채점하기</button>
+
+    <div id="feedbackContainerBlind" class="hidden">
+      <div id="feedbackTextBlind" class="feedback-box"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <button class="btn-re-drill" id="btnReDrill2" onclick="markForReDrill(currentBlindData.patternId)">
+          🔁 이 패턴 아직 미숙함 (계속 집중 훈련)
+        </button>
+      </div>
+      <button class="btn btn-success" onclick="loadNextBlind()">다음 실전 문제 ➔</button>
+    </div>
+  </div>
+
+  <!-- 3. Step 3: Snowball Multi-Pattern & Free Composition -->
+  <div id="snowballSection" class="card hidden">
+    <!-- Sub Mode Segment -->
+    <div class="segment-bar">
+      <button class="segment-btn active" id="segBtn1" onclick="switchSnowballMode('paragraph')">🏔️ 스노우볼 문단 말하기 (2~5개)</button>
+      <button class="segment-btn" id="segBtn2" onclick="switchSnowballMode('free')">✍️ 내 패턴 자유 영작</button>
+    </div>
+
+    <!-- Snowball Mode A: Paragraph Cascade -->
+    <div id="snowballParagraphArea">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 12px; font-weight: 700; color: var(--snow);">결합할 패턴 수:</span>
+        <select id="snowballCountSelect" onchange="loadNextSnowballParagraph()" style="padding: 4px 8px; border-radius: 6px; font-size: 12px; border: 1px solid var(--border);">
+          <option value="2">2개 패턴 결합</option>
+          <option value="3" selected>3개 패턴 결합</option>
+          <option value="4">4개 패턴 결합</option>
+          <option value="5">5개 패턴 결합</option>
+        </select>
+      </div>
+
+      <div style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px;">상황 문단 (한글을 보고 패턴들을 연결해 연속 발화하세요)</div>
+      <div class="prompt-box" id="snowballKoreanText" style="border-left-color: var(--snow); min-height: 80px;">문단 생성 중...</div>
+
+      <div class="input-row">
+        <textarea id="snowballUserInput" rows="3" placeholder="연결하여 영어로 쭉 말해보세요..."></textarea>
+        <button class="mic-btn" id="micBtn3" onclick="toggleSpeechRecognition('snowballUserInput', 'micBtn3')">🎙️</button>
+      </div>
+      <div id="speechStatus3" style="font-size: 11px; color: var(--muted); margin-top: 4px;"></div>
+
+      <button class="btn btn-snow" id="btnSubmitSnowball" onclick="submitSnowballParagraph()">문단 연쇄 발화 채점하기</button>
+    </div>
+
+    <!-- Snowball Mode B: Free Composition -->
+    <div id="snowballFreeArea" class="hidden">
+      <div style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px;">
+        💡 내 패턴 단어장에서 표현을 골라 오늘의 일기나 하고 싶은 말을 자유롭게 영작/발화해보세요!
+      </div>
+      <div id="snowballAvailableChips" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;"></div>
+
+      <textarea id="freeUserInput" rows="4" placeholder="자유롭게 영어 문장이나 짧은 스토리를 입력하거나 마이크로 말하세요..."></textarea>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+        <button class="mic-btn" id="micBtn4" onclick="toggleSpeechRecognition('freeUserInput', 'micBtn4')">🎙️</button>
+        <div id="speechStatus4" style="font-size: 11px; color: var(--muted);"></div>
+      </div>
+
+      <button class="btn btn-snow" id="btnSubmitFree" onclick="submitFreeComposition()">AI 원어민 교정 & 추천 패턴 분석</button>
+    </div>
+
+    <!-- Snowball Feedback Container -->
+    <div id="feedbackContainerSnowball" class="hidden">
+      <div id="feedbackTextSnowball" class="feedback-box"></div>
+      
+      <div id="recommendAreaSnowball" class="recommendation-card hidden">
+        <div style="font-size: 12px; font-weight: 700; color: #15803d;">✨ 더 자연스러운 추천 패턴</div>
+        <div style="font-size: 14px; font-weight: 600; color: #14532d;" id="recommendPatternTextSnowball">-</div>
+        <div style="font-size: 12px; color: #166534;" id="recommendMeaningTextSnowball">-</div>
+        <button class="btn-add-pattern" onclick="addRecommendedPatternSnowball()">➕ 내 단어장에 즉시 추가</button>
+      </div>
+
+      <button class="btn btn-success" onclick="refreshCurrentSnowball()">다음 훈련 계속하기 ➔</button>
+    </div>
+  </div>
+
+  <!-- 4. Patterns Tab -->
   <div id="patternsSection" class="card hidden">
-    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 4px;">새 표현 / 뉘앙스 추가</h3>
-    <p style="font-size: 13px; color: var(--muted); margin-bottom: 10px;">
-      한국어 뉘앙스나 미드/유튜브에서 본 영어 표현을 입력하세요.
-    </p>
+    <!-- Mode Switch for Single vs Bulk Registration -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+      <h3 style="font-size: 15px; font-weight: 800;">패턴 등록</h3>
+      <button class="btn-sm btn-secondary" id="btnToggleBulk" onclick="toggleBulkRegisterUI()">📑 대량 일괄 등록 열기</button>
+    </div>
 
-    <input type="text" id="inputIntent" placeholder="한국어 뉘앙스 또는 영어 표현 입력..." />
-    <input type="text" id="inputCustomMeaning" placeholder="추가 메모/상황 (선택 사항)" />
-    <button class="btn btn-primary" id="btnAddPattern" onclick="registerNewPattern()">AI 분석 및 패턴 등록</button>
+    <!-- Single Pattern Add -->
+    <div id="singleAddArea">
+      <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">한국어 뉘앙스나 미드/유튜브에서 본 영어 표현을 입력하세요.</p>
+      <input type="text" id="inputIntent" placeholder="한국어 뉘앙스 또는 영어 표현 입력..." />
+      <input type="text" id="inputCustomMeaning" placeholder="추가 메모/상황 (선택 사항)" />
+      <button class="btn btn-primary" id="btnAddPattern" onclick="registerNewPattern()">AI 분석 및 단일 패턴 등록</button>
+    </div>
 
-    <h4 style="font-size: 14px; font-weight: 700; margin-top: 20px; margin-bottom: 8px;">등록된 패턴 목록</h4>
+    <!-- Bulk Pattern Add (Text Box) -->
+    <div id="bulkAddArea" class="hidden" style="background:#f1f5f9; padding:12px; border-radius:10px; margin-bottom:12px; border:1px solid var(--border);">
+      <div style="font-size:13px; font-weight:700; color:#1e1b4b; margin-bottom:4px;">📋 컴퓨터에서 패턴 대량 붙여넣기</div>
+      <div style="font-size:11px; color:var(--muted); margin-bottom:8px; line-height:1.4;">
+        메모장이나 엑셀에서 패턴들을 복사해 한 줄에 하나씩 붙여넣으세요.<br/>
+        예: <code>I was thinking of -ing : ~할까 생각 중이야</code> 또는 그냥 영어 표현만 적어도 됩니다.
+      </div>
+      <textarea id="bulkInputArea" rows="6" placeholder="I was thinking of -ing : ~할까 생각 중이야&#10;Turns out that : 알고 보니까 ~하더라고&#10;Feel like -ing : ~하고 싶다&#10;I'm about to : 막 ~하려던 참이야"></textarea>
+      <button class="btn btn-primary" style="background:#0284c7;" id="btnProcessBulk" onclick="processBulkPatterns()">⚡ 위 패턴들 한 번에 일괄 등록</button>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:8px;">
+      <h4 style="font-size: 14px; font-weight: 700;">내 패턴 단어장</h4>
+      <span style="font-size: 11px; color: var(--muted);">태그를 눌러 숙달 상태를 변경하세요</span>
+    </div>
     <div id="patternListContainer"></div>
   </div>
 
-  <!-- 3. Mistakes Tab -->
+  <!-- 5. Mistakes Tab -->
   <div id="mistakesSection" class="card hidden">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-      <h3 style="font-size: 16px; font-weight: 800;">오답노트 & 취약점</h3>
+      <h3 style="font-size: 15px; font-weight: 800;">오답노트 & 취약점</h3>
       <button class="btn btn-sm" style="background:#fee2e2; color:#ef4444;" onclick="clearMistakes()">비우기</button>
     </div>
-    <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">패턴을 제때 인출하지 못했거나 어색하게 말했던 기록입니다.</p>
     <div id="mistakeListContainer"></div>
+  </div>
+
+  <!-- 6. Sync Tab -->
+  <div id="syncSection" class="card hidden">
+    <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 4px;">📲 기기 간 단어장 연동 / 백업</h3>
+    <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">노트북에서 대량으로 입력한 패턴을 핸드폰으로 옮길 때 사용하세요.</p>
+
+    <div class="sync-box">
+      <strong style="font-size: 13px;">1. 패턴 내보내기 (복사)</strong>
+      <div style="font-size: 11px; color: var(--muted); margin: 3px 0 6px 0;">현재 컴퓨터/핸드폰의 단어장을 텍스트로 복사합니다.</div>
+      <button class="btn btn-secondary" onclick="exportData()">📋 내 패턴 데이터 전체 복사</button>
+    </div>
+
+    <div class="sync-box">
+      <strong style="font-size: 13px;">2. 패턴 가져오기 (붙여넣기)</strong>
+      <div style="font-size: 11px; color: var(--muted); margin: 3px 0 6px 0;">카카오톡 등으로 전송받은 텍스트를 붙여넣어 합칩니다.</div>
+      <textarea id="importArea" rows="3" placeholder="복사한 패턴 데이터를 여기에 붙여넣으세요..."></textarea>
+      <button class="btn btn-primary" onclick="importData()">📥 데이터 가져와서 병합하기</button>
+    </div>
   </div>
 </div>
 
 <script>
   const DEFAULT_PATTERNS = [
-    { id: '1', pattern: 'I was thinking of -ing', meaning: '~할까 생각 중이야 (확정 전 고민/제안)' },
-    { id: '2', pattern: 'I was wondering if you could', meaning: '혹시 ~해줄 수 있나 해서 (조심스러운 부탁)' },
-    { id: '3', pattern: 'Turns out that', meaning: '알고 보니까 ~하더라고 (반전/발견)' }
+    { id: '1', pattern: 'I was thinking of -ing', meaning: '~할까 생각 중이야 (확정 전 고민/제안)', needDrill: true },
+    { id: '2', pattern: 'I was wondering if you could', meaning: '혹시 ~해줄 수 있나 해서 (조심스러운 부탁)', needDrill: true },
+    { id: '3', pattern: 'Turns out that', meaning: '알고 보니까 ~하더라고 (반전/발견)', needDrill: true },
+    { id: '4', pattern: 'Feel like -ing', meaning: '~하고 싶다 / 땡기다 (순간적인 충동)', needDrill: true },
+    { id: '5', pattern: 'There is no way that', meaning: '~일 리가 절대 없어 (강한 부정/확신)', needDrill: true }
   ];
 
   let patterns = JSON.parse(localStorage.getItem('pr_patterns')) || DEFAULT_PATTERNS;
   let mistakes = JSON.parse(localStorage.getItem('pr_mistakes')) || [];
+  
   let currentDrillData = null;
+  let currentBlindData = null;
+  let currentSnowballData = null;
   let recommendedNewPattern = null;
+  let snowballMode = 'paragraph';
+  let isBulkOpen = false;
 
-  // Web Speech STT setup
+  // Speech Recognition state
   let recognition = null;
   let isRecording = false;
+  let activeTargetInputId = null;
+  let activeMicBtnId = null;
 
   window.addEventListener('DOMContentLoaded', () => {
+    patterns.forEach(p => { if (typeof p.needDrill !== 'boolean') p.needDrill = true; });
     updateCounts();
     checkApiKeyUI();
     renderPatternList();
     renderMistakes();
     initSpeechRecognition();
-    loadDrill();
+    loadNextDrill();
   });
 
-  function initSpeechRecognition() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      document.getElementById('speechStatus').innerText = '※ 이 브라우저는 음성 인식을 지원하지 않습니다. 키보드를 사용해주세요.';
-      document.getElementById('micBtn').style.opacity = '0.5';
-      return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.lang = 'en-US'; // 영어 발화 인식
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      isRecording = true;
-      const mic = document.getElementById('micBtn');
-      mic.classList.add('recording');
-      mic.innerText = '⏹️';
-      document.getElementById('speechStatus').innerText = '🎙️ 듣고 있습니다... 영어로 말해보세요!';
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      document.getElementById('userInput').value = transcript;
-      document.getElementById('speechStatus').innerText = `인식 완료: "${transcript}"`;
-    };
-
-    recognition.onerror = (event) => {
-      document.getElementById('speechStatus').innerText = `음성 인식 오류: ${event.error}`;
-      stopRecordingUI();
-    };
-
-    recognition.onend = () => {
-      stopRecordingUI();
-    };
+  function toggleBulkRegisterUI() {
+    isBulkOpen = !isBulkOpen;
+    document.getElementById('bulkAddArea').classList.toggle('hidden', !isBulkOpen);
+    document.getElementById('btnToggleBulk').innerText = isBulkOpen ? '✕ 대량 등록 닫기' : '📑 대량 일괄 등록 열기';
   }
 
-  function stopRecordingUI() {
-    isRecording = false;
-    const mic = document.getElementById('micBtn');
-    mic.classList.remove('recording');
-    mic.innerText = '🎙️';
-  }
+  function processBulkPatterns() {
+    const rawText = document.getElementById('bulkInputArea').value.trim();
+    if (!rawText) return alert('붙여넣을 패턴이 없습니다.');
 
-  function toggleSpeechRecognition() {
-    if (!recognition) return alert('현재 브라우저 환경에서 음성 인식을 지원하지 않습니다 (Chrome/Safari 권장).');
-    if (isRecording) {
-      recognition.stop();
-    } else {
-      try {
-        recognition.start();
-      } catch(e) {
-        recognition.stop();
+    const lines = rawText.split('
+');
+    let addedCount = 0;
+
+    lines.forEach(line => {
+      const clean = line.trim();
+      if (!clean) return;
+
+      let pattern = clean;
+      let meaning = '일상 핵심 회화 패턴';
+
+      if (clean.includes(':')) {
+        const parts = clean.split(':');
+        pattern = parts[0].trim();
+        meaning = parts.slice(1).join(':').trim() || meaning;
+      } else if (clean.includes('-')) {
+        const parts = clean.split('-');
+        pattern = parts[0].trim();
+        meaning = parts.slice(1).join('-').trim() || meaning;
+      } else if (clean.includes('=')) {
+        const parts = clean.split('=');
+        pattern = parts[0].trim();
+        meaning = parts.slice(1).join('=').trim() || meaning;
       }
-    }
-  }
 
-  function playTTS(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance);
+      // Check duplicates
+      if (!patterns.some(p => p.pattern.toLowerCase() === pattern.toLowerCase())) {
+        patterns.push({
+          id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          pattern: pattern,
+          meaning: meaning,
+          needDrill: true
+        });
+        addedCount++;
+      }
+    });
+
+    localStorage.setItem('pr_patterns', JSON.stringify(patterns));
+    updateCounts();
+    renderPatternList();
+    document.getElementById('bulkInputArea').value = '';
+    toggleBulkRegisterUI();
+    alert(`🎉 총 ${addedCount}개의 패턴이 단어장에 한 번에 일괄 등록되었습니다!`);
   }
 
   function updateCounts() {
@@ -505,23 +686,20 @@
   async function testAndSaveApiKey() {
     const key = document.getElementById('apiKeyInput').value.trim();
     const statusDiv = document.getElementById('apiTestStatus');
-    if (!key) {
-      statusDiv.style.color = '#dc2626';
-      statusDiv.innerText = '❌ 키를 입력해주세요.';
-      return;
-    }
+    if (!key) return (statusDiv.innerText = '❌ 키를 입력해주세요.');
+
     statusDiv.style.color = '#4f46e5';
-    statusDiv.innerText = '⏳ 최신 Gemini 모델과 통신 확인 중...';
+    statusDiv.innerText = '⏳ Gemini 최신 모델 통신 확인 중...';
 
     try {
       await callGeminiApi(key, 'Hello, return {"status":"ok"} in json format');
       localStorage.setItem('pr_gemini_key', key);
       statusDiv.style.color = '#16a34a';
-      statusDiv.innerText = '✅ 연결 성공! 정상적으로 저장되었습니다.';
+      statusDiv.innerText = '✅ 연결 성공! 저장되었습니다.';
       checkApiKeyUI();
       setTimeout(() => {
         document.getElementById('apiConfig').classList.add('hidden');
-        loadDrill();
+        loadNextDrill();
       }, 700);
     } catch(err) {
       statusDiv.style.color = '#dc2626';
@@ -530,16 +708,80 @@
   }
 
   function showTab(tabName) {
+    const tabKeys = ['drill', 'blind', 'snowball', 'patterns', 'mistakes', 'sync'];
     document.querySelectorAll('.tabs .tab-btn').forEach((btn, idx) => {
-      btn.classList.toggle('active', 
-        (tabName === 'drill' && idx === 0) || 
-        (tabName === 'patterns' && idx === 1) || 
-        (tabName === 'mistakes' && idx === 2)
-      );
+      btn.classList.toggle('active', tabKeys[idx] === tabName);
     });
-    document.getElementById('drillSection').classList.toggle('hidden', tabName !== 'drill');
-    document.getElementById('patternsSection').classList.toggle('hidden', tabName !== 'patterns');
-    document.getElementById('mistakesSection').classList.toggle('hidden', tabName !== 'mistakes');
+    tabKeys.forEach(k => {
+      const section = document.getElementById(`${k}Section`);
+      if (section) section.classList.toggle('hidden', k !== tabName);
+    });
+
+    if (tabName === 'blind' && !currentBlindData) loadNextBlind();
+    if (tabName === 'snowball') {
+      renderAvailableChips();
+      if (snowballMode === 'paragraph' && !currentSnowballData) loadNextSnowballParagraph();
+    }
+  }
+
+  function initSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      isRecording = true;
+      if (activeMicBtnId) {
+        const mic = document.getElementById(activeMicBtnId);
+        mic.classList.add('recording');
+        mic.innerText = '⏹️';
+      }
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      if (activeTargetInputId) {
+        const el = document.getElementById(activeTargetInputId);
+        el.value = el.value ? `${el.value} ${transcript}` : transcript;
+      }
+    };
+
+    recognition.onerror = () => stopRecordingUI();
+    recognition.onend = () => stopRecordingUI();
+  }
+
+  function stopRecordingUI() {
+    isRecording = false;
+    if (activeMicBtnId) {
+      const mic = document.getElementById(activeMicBtnId);
+      mic.classList.remove('recording');
+      mic.innerText = '🎙️';
+    }
+  }
+
+  function toggleSpeechRecognition(targetInputId, micBtnId) {
+    if (!recognition) return alert('현재 환경에서 음성 인식을 지원하지 않습니다.');
+    activeTargetInputId = targetInputId;
+    activeMicBtnId = micBtnId;
+
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      try { recognition.start(); } catch(e) { recognition.stop(); }
+    }
+  }
+
+  function playTTS(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
   }
 
   async function callGeminiApi(apiKey, promptText) {
@@ -565,7 +807,7 @@
 
         const data = await response.json();
         const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!candidateText) throw new Error('구글 API에서 빈 응답이 반환되었습니다.');
+        if (!candidateText) throw new Error('빈 응답 반환');
         return JSON.parse(candidateText);
       } catch (err) {
         lastError = err;
@@ -574,32 +816,54 @@
     throw lastError;
   }
 
-  async function loadDrill() {
-    if (patterns.length === 0) {
-      document.getElementById('emptyPatternWarning').classList.remove('hidden');
-      document.getElementById('drillPlayArea').classList.add('hidden');
-      return;
+  // Self-Determined Re-Drill Action
+  function markForReDrill(patternId) {
+    const p = patterns.find(item => item.id === patternId);
+    if (p) {
+      p.needDrill = true;
+      localStorage.setItem('pr_patterns', JSON.stringify(patterns));
+      renderPatternList();
+      alert(`[${p.pattern}] 패턴이 '집중 연습 우선 큐'에 등록되었습니다!`);
     }
-    document.getElementById('emptyPatternWarning').classList.add('hidden');
-    document.getElementById('drillPlayArea').classList.remove('hidden');
-    document.getElementById('feedbackContainer').classList.add('hidden');
-    document.getElementById('recommendArea').classList.add('hidden');
-    document.getElementById('btnSubmit').disabled = false;
-    document.getElementById('userInput').value = '';
-    document.getElementById('speechStatus').innerText = '';
+  }
 
-    const randomPattern = patterns[Math.floor(Math.random() * patterns.length)];
+  function togglePatternNeedDrill(id) {
+    const p = patterns.find(item => item.id === id);
+    if (p) {
+      p.needDrill = !p.needDrill;
+      localStorage.setItem('pr_patterns', JSON.stringify(patterns));
+      renderPatternList();
+    }
+  }
+
+  function getPrioritizedPattern() {
+    if (patterns.length === 0) return null;
+    const needList = patterns.filter(p => p.needDrill);
+    if (needList.length > 0 && Math.random() < 0.75) {
+      return needList[Math.floor(Math.random() * needList.length)];
+    }
+    return patterns[Math.floor(Math.random() * patterns.length)];
+  }
+
+  // Step 1: Guided Drill
+  async function loadNextDrill() {
+    if (patterns.length === 0) return;
+    document.getElementById('feedbackContainerDrill').classList.add('hidden');
+    document.getElementById('recommendAreaDrill').classList.add('hidden');
+    document.getElementById('btnSubmitDrill').disabled = false;
+    document.getElementById('userInput').value = '';
+
+    const randomPattern = getPrioritizedPattern();
     document.getElementById('currentTargetPattern').innerText = randomPattern.pattern;
     document.getElementById('currentTargetMeaning').innerText = randomPattern.meaning;
+    document.getElementById('drillStreakBadge').innerText = randomPattern.needDrill ? '집중 연습 중' : '숙달 완료됨';
+    document.getElementById('drillStreakBadge').className = `badge ${randomPattern.needDrill ? 'badge-need' : 'badge-mastered'}`;
     document.getElementById('currentKoreanSentence').innerText = "상황 문장 로딩 중...";
 
     const apiKey = localStorage.getItem('pr_gemini_key');
-    if (!apiKey) {
-      document.getElementById('currentKoreanSentence').innerText = "API Key를 상단에서 등록해주세요.";
-      return;
-    }
+    if (!apiKey) return (document.getElementById('currentKoreanSentence').innerText = "상단에서 API Key를 먼저 등록해주세요.");
 
-    const prompt = `영어 패턴 "${randomPattern.pattern}" (뜻: ${randomPattern.meaning})을 활용할 수 있는 쉽고 캐주얼한 일상 한국어 한 문장과 원어민 모범 답안을 만드세요.
+    const prompt = `영어 패턴 "${randomPattern.pattern}" (뜻: ${randomPattern.meaning})을 활용할 수 있는 짧고 생생한 일상 한국어 한 문장과 원어민 모범 답안을 만드세요.
     JSON 형식:
     { "koreanSentence": "문장", "modelAnswer": "모범답안" }`;
 
@@ -614,75 +878,119 @@
       };
       document.getElementById('currentKoreanSentence').innerText = `"${res.koreanSentence}"`;
     } catch(err) {
-      document.getElementById('currentKoreanSentence').innerText = `문장 생성 실패 (${err.message})`;
+      document.getElementById('currentKoreanSentence').innerText = `문장 생성 오류 (${err.message})`;
     }
   }
 
-  async function submitAnswer() {
-    const userAns = document.getElementById('userInput').value.trim();
+  // Step 2: Blind Reflex Test
+  async function loadNextBlind() {
+    if (patterns.length === 0) return;
+    document.getElementById('feedbackContainerBlind').classList.add('hidden');
+    document.getElementById('blindHintBox').classList.add('hidden');
+    document.getElementById('btnSubmitBlind').disabled = false;
+    document.getElementById('blindUserInput').value = '';
+    document.getElementById('blindKoreanSentence').innerText = "실전 문제 로딩 중...";
+
+    const randomPattern = getPrioritizedPattern();
+    const apiKey = localStorage.getItem('pr_gemini_key');
+    if (!apiKey) return (document.getElementById('blindKoreanSentence').innerText = "상단에서 API Key를 먼저 등록해주세요.");
+
+    const prompt = `영어 패턴 "${randomPattern.pattern}" (뜻: ${randomPattern.meaning})을 자연스럽게 활용할 수 있는 일상 한국어 한 문장과 원어민 모범 답안을 만드세요.
+    JSON 형식:
+    { "koreanSentence": "문장", "modelAnswer": "모범답안" }`;
+
+    try {
+      const res = await callGeminiApi(apiKey, prompt);
+      currentBlindData = {
+        patternId: randomPattern.id,
+        pattern: randomPattern.pattern,
+        meaning: randomPattern.meaning,
+        koreanSentence: res.koreanSentence,
+        modelAnswer: res.modelAnswer
+      };
+      document.getElementById('blindKoreanSentence').innerText = `"${res.koreanSentence}"`;
+    } catch(err) {
+      document.getElementById('blindKoreanSentence').innerText = `실전 문제 로드 오류 (${err.message})`;
+    }
+  }
+
+  function revealHint() {
+    if (!currentBlindData) return;
+    const hintBox = document.getElementById('blindHintBox');
+    hintBox.innerText = `💡 힌트 패턴: ${currentBlindData.pattern} (${currentBlindData.meaning})`;
+    hintBox.classList.remove('hidden');
+    setTimeout(() => hintBox.classList.add('hidden'), 1800);
+  }
+
+  async function submitAnswer(mode) {
+    const isDrill = mode === 'drill';
+    const inputId = isDrill ? 'userInput' : 'blindUserInput';
+    const currentData = isDrill ? currentDrillData : currentBlindData;
+    const feedbackBoxId = isDrill ? 'feedbackTextDrill' : 'feedbackTextBlind';
+    const containerId = isDrill ? 'feedbackContainerDrill' : 'feedbackContainerBlind';
+    const submitBtnId = isDrill ? 'btnSubmitDrill' : 'btnSubmitBlind';
+
+    const userAns = document.getElementById(inputId).value.trim();
     if (!userAns) return alert('답변을 입력하거나 마이크로 말씀해주세요.');
 
     const apiKey = localStorage.getItem('pr_gemini_key');
-    if (!apiKey) {
-      alert('API Key를 먼저 등록해주세요.');
-      toggleApiSettings();
-      return;
-    }
+    if (!apiKey) return alert('API Key를 먼저 등록해주세요.');
 
-    document.getElementById('btnSubmit').disabled = true;
-    document.getElementById('feedbackContainer').classList.remove('hidden');
-    document.getElementById('feedbackText').className = 'feedback-box suggest';
-    document.getElementById('feedbackText').innerText = "AI가 발화를 정밀 채점 중입니다...";
+    document.getElementById(submitBtnId).disabled = true;
+    document.getElementById(containerId).classList.remove('hidden');
+    const fbBox = document.getElementById(feedbackBoxId);
+    fbBox.className = 'feedback-box suggest';
+    fbBox.innerText = "AI가 발화를 정밀 채점 중입니다...";
 
     const prompt = `당신은 영어 회화 전문 코치입니다.
-    - 한국어 문장: "${currentDrillData.koreanSentence}"
-    - 타겟 패턴: "${currentDrillData.pattern}"
-    - 모범 답안: "${currentDrillData.modelAnswer}"
+    - 한국어 문장: "${currentData.koreanSentence}"
+    - 목표 패턴: "${currentData.pattern}"
+    - 모범 답안: "${currentData.modelAnswer}"
     - 사용자 답변: "${userAns}"
 
-    JSON 형식으로만 반환:
+    JSON 형식:
     {
-      "isCorrect": true/false (패턴을 적절히 살렸으면 true),
-      "feedback": "간결한 코칭 피드백",
+      "isCorrect": true/false (패턴의 뉘앙스를 자연스럽게 살렸으면 true),
+      "feedback": "간결하고 구체적인 코칭 피드백",
       "nativeExpression": "자연스러운 원어민 표현",
       "hasNewPatternRecommendation": true/false,
-      "recommendedPattern": "추천할 영어 핵심 패턴 (청크)",
-      "recommendedPatternMeaning": "추천 패턴 한국어 뉘앙스"
+      "recommendedPattern": "추천할 영어 핵심 패턴",
+      "recommendedPatternMeaning": "추천 패턴 뉘앙스"
     }`;
 
     try {
       const res = await callGeminiApi(apiKey, prompt);
-      const fbBox = document.getElementById('feedbackText');
       fbBox.className = `feedback-box ${res.isCorrect ? 'correct' : 'incorrect'}`;
       
       fbBox.innerHTML = `
         <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">
-          ${res.isCorrect ? '🎉 완벽한 반사신경입니다!' : '💡 이렇게 말하면 훨씬 자연스러워요'}
+          ${res.isCorrect ? '🎉 완벽한 반사신경입니다!' : '💡 핵심 피드백'}
+        </div>
+        <div style="margin-bottom:6px; font-weight:700; color:#4338ca;">
+          🎯 목표 패턴: <u>${currentData.pattern}</u>
         </div>
         <div>${res.feedback}</div>
         <div style="margin-top: 8px; font-weight: 700; color: #1e1b4b; display: flex; align-items: center; flex-wrap: wrap;">
           👉 네이티브 추천: <span style="text-decoration: underline; margin-left: 4px;">${res.nativeExpression}</span>
-          <span class="tts-btn" onclick="playTTS('${res.nativeExpression.replace(/'/g, "\\'")}')" title="원어민 발음 듣기"> 🔊</span>
+          <span class="tts-btn" onclick="playTTS('${res.nativeExpression.replace(/'/g, "\\'")}')"> 🔊</span>
         </div>
       `;
 
-      if (res.hasNewPatternRecommendation && res.recommendedPattern) {
+      if (isDrill && res.hasNewPatternRecommendation && res.recommendedPattern) {
         recommendedNewPattern = {
           pattern: res.recommendedPattern,
           meaning: res.recommendedPatternMeaning
         };
-        document.getElementById('recommendPatternText').innerText = res.recommendedPattern;
-        document.getElementById('recommendMeaningText').innerText = res.recommendedPatternMeaning;
-        document.getElementById('recommendArea').classList.remove('hidden');
-      } else {
-        document.getElementById('recommendArea').classList.add('hidden');
+        document.getElementById('recommendPatternTextDrill').innerText = res.recommendedPattern;
+        document.getElementById('recommendMeaningTextDrill').innerText = res.recommendedPatternMeaning;
+        document.getElementById('recommendAreaDrill').classList.remove('hidden');
       }
 
       if (!res.isCorrect) {
         mistakes.unshift({
           id: Date.now().toString(),
-          targetPattern: currentDrillData.pattern,
-          korean: currentDrillData.koreanSentence,
+          targetPattern: currentData.pattern,
+          korean: currentData.koreanSentence,
           userAns: userAns,
           nativeExpression: res.nativeExpression,
           date: new Date().toLocaleDateString()
@@ -691,36 +999,232 @@
         updateCounts();
         renderMistakes();
       }
-    } catch (e) {
+    } catch(e) {
       alert('채점 중 오류: ' + e.message);
-      document.getElementById('btnSubmit').disabled = false;
+      document.getElementById(submitBtnId).disabled = false;
+    }
+  }
+
+  // Step 3: Snowball Logic
+  function switchSnowballMode(mode) {
+    snowballMode = mode;
+    document.getElementById('segBtn1').classList.toggle('active', mode === 'paragraph');
+    document.getElementById('segBtn2').classList.toggle('active', mode === 'free');
+    document.getElementById('snowballParagraphArea').classList.toggle('hidden', mode !== 'paragraph');
+    document.getElementById('snowballFreeArea').classList.toggle('hidden', mode !== 'free');
+    document.getElementById('feedbackContainerSnowball').classList.add('hidden');
+
+    if (mode === 'paragraph' && !currentSnowballData) {
+      loadNextSnowballParagraph();
+    } else if (mode === 'free') {
+      renderAvailableChips();
+    }
+  }
+
+  function renderAvailableChips() {
+    const container = document.getElementById('snowballAvailableChips');
+    if (patterns.length === 0) {
+      container.innerHTML = '<span style="font-size:12px; color:var(--muted);">등록된 패턴이 없습니다.</span>';
+      return;
+    }
+    container.innerHTML = patterns.map(p => `
+      <span class="badge" style="background:#e0f2fe; color:#0369a1; cursor:pointer; padding:4px 8px;" onclick="insertPatternToFree('${p.pattern}')">
+        + ${p.pattern}
+      </span>
+    `).join('');
+  }
+
+  function insertPatternToFree(patternText) {
+    const area = document.getElementById('freeUserInput');
+    area.value = area.value ? `${area.value} ${patternText}` : patternText;
+    area.focus();
+  }
+
+  async function loadNextSnowballParagraph() {
+    const count = parseInt(document.getElementById('snowballCountSelect').value, 10) || 3;
+    if (patterns.length < 2) return alert('패턴이 최소 2개 이상 등록되어 있어야 결합 문단을 생성할 수 있습니다.');
+
+    document.getElementById('feedbackContainerSnowball').classList.add('hidden');
+    document.getElementById('btnSubmitSnowball').disabled = false;
+    document.getElementById('snowballUserInput').value = '';
+    document.getElementById('snowballKoreanText').innerText = `스노우볼 ${count}개 패턴 결합 문단 생성 중...`;
+
+    const shuffled = [...patterns].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, Math.min(count, patterns.length));
+    const patternSummary = selected.map((p, i) => `${i+1}. "${p.pattern}" (${p.meaning})`).join('
+');
+
+    const apiKey = localStorage.getItem('pr_gemini_key');
+    if (!apiKey) return (document.getElementById('snowballKoreanText').innerText = "상단에서 API Key를 먼저 등록해주세요.");
+
+    const prompt = `사용자가 한 번에 연결해서 말할 수 있는 하나의 자연스러운 한국어 일상 단락(2~4문장)과 원어민 모범 답안을 만드세요.
+    반드시 다음 ${selected.length}개 영어 패턴을 순서대로 자연스럽게 녹여내야 합니다:
+    ${patternSummary}
+
+    JSON 형식:
+    {
+      "koreanParagraph": "자연스러운 한국어 연결 문단",
+      "modelParagraph": "위 패턴들이 모두 녹아든 원어민 모범 영어 문단",
+      "targetPatterns": ["패턴1", "패턴2", ...]
+    }`;
+
+    try {
+      const res = await callGeminiApi(apiKey, prompt);
+      currentSnowballData = {
+        koreanParagraph: res.koreanParagraph,
+        modelParagraph: res.modelParagraph,
+        patterns: selected
+      };
+      document.getElementById('snowballKoreanText').innerText = res.koreanParagraph;
+    } catch(err) {
+      document.getElementById('snowballKoreanText').innerText = `문단 생성 오류 (${err.message})`;
+    }
+  }
+
+  async function submitSnowballParagraph() {
+    const userAns = document.getElementById('snowballUserInput').value.trim();
+    if (!userAns) return alert('답변을 입력하거나 마이크로 말씀해주세요.');
+
+    const apiKey = localStorage.getItem('pr_gemini_key');
+    if (!apiKey) return alert('API Key를 먼저 등록해주세요.');
+
+    document.getElementById('btnSubmitSnowball').disabled = true;
+    document.getElementById('feedbackContainerSnowball').classList.remove('hidden');
+    const fbBox = document.getElementById('feedbackTextSnowball');
+    fbBox.className = 'feedback-box suggest';
+    fbBox.innerText = "AI가 문단 연결성과 패턴 활용도를 종합 채점 중입니다...";
+
+    const prompt = `당신은 영어 스피킹 코치입니다.
+    - 목표 한국어 문단: "${currentSnowballData.koreanParagraph}"
+    - 목표 패턴들: ${currentSnowballData.patterns.map(p => p.pattern).join(', ')}
+    - 모범 답안: "${currentSnowballData.modelParagraph}"
+    - 사용자 연속 발화: "${userAns}"
+
+    JSON 형식:
+    {
+      "score": 100점 만점 기준 점수,
+      "feedback": "각 패턴이 자연스럽게 연결되었는지 구체적인 피드백",
+      "polishedNative": "원어민 수준으로 매끄럽게 다듬은 완성 문단",
+      "missedPatterns": ["누락되었거나 어색했던 패턴들"]
+    }`;
+
+    try {
+      const res = await callGeminiApi(apiKey, prompt);
+      fbBox.className = 'feedback-box correct';
+      
+      const patternListBadges = currentSnowballData.patterns.map(p => `
+        <span class="badge" style="background:#e0f2fe; color:#0369a1; margin-right:4px;">${p.pattern}</span>
+      `).join('');
+
+      fbBox.innerHTML = `
+        <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">
+          🎉 문단 결합 채점 완료! (숙달 점수: ${res.score}점)
+        </div>
+        <div style="margin-bottom:6px;">목표 패턴: ${patternListBadges}</div>
+        <div>${res.feedback}</div>
+        <div style="margin-top: 10px; font-weight: 700; color: #1e1b4b; background:#ffffff; padding:10px; border-radius:8px;">
+          👉 네이티브 완성 문단:
+          <div style="margin-top:4px; font-weight:600; color:#334155;">${res.polishedNative}</div>
+          <button class="btn-sm" style="background:#e0e7ff; color:#4f46e5; border:none; border-radius:6px; cursor:pointer; margin-top:6px;" onclick="playTTS('${res.polishedNative.replace(/'/g, "\\'")}')">
+            🔊 원어민 전체 발음 듣기
+          </button>
+        </div>
+      `;
+      document.getElementById('recommendAreaSnowball').classList.add('hidden');
+    } catch(e) {
+      alert('채점 오류: ' + e.message);
+      document.getElementById('btnSubmitSnowball').disabled = false;
+    }
+  }
+
+  async function submitFreeComposition() {
+    const userAns = document.getElementById('freeUserInput').value.trim();
+    if (!userAns) return alert('자유 영작/스피킹 내용을 입력하세요.');
+
+    const apiKey = localStorage.getItem('pr_gemini_key');
+    if (!apiKey) return alert('API Key를 먼저 등록해주세요.');
+
+    document.getElementById('btnSubmitFree').disabled = true;
+    document.getElementById('feedbackContainerSnowball').classList.remove('hidden');
+    const fbBox = document.getElementById('feedbackTextSnowball');
+    fbBox.className = 'feedback-box suggest';
+    fbBox.innerText = "AI가 문장을 분석하고 원어민 표현 및 추천 패턴을 추출 중입니다...";
+
+    const prompt = `사용자가 작성한 자유 영어 발화입니다: "${userAns}"
+    1. 사용자가 의도한 문맥을 파악해 문법/뉘앙스 교정 피드백을 제공하세요.
+    2. 원어민이 일상에서 실제로 쓰는 가장 자연스러운 문장(Native Rewrite)으로 다듬어주세요.
+    3. 이 문장을 더 맛깔나게 바꿀 수 있는 새로운 원어민 핵심 패턴(청크) 1개와 한국어 뉘앙스를 추천해주세요.
+
+    JSON 형식:
+    {
+      "correction": "문법/뉘앙스 상세 피드백",
+      "nativeRewrite": "원어민 리라이팅 문장",
+      "recommendedPattern": "추천 핵심 패턴",
+      "recommendedPatternMeaning": "추천 패턴 한국어 뉘앙스"
+    }`;
+
+    try {
+      const res = await callGeminiApi(apiKey, prompt);
+      fbBox.className = 'feedback-box correct';
+      
+      fbBox.innerHTML = `
+        <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">✨ 자유 영작 정밀 분석 결과</div>
+        <div>${res.correction}</div>
+        <div style="margin-top: 10px; font-weight: 700; color: #1e1b4b; background:#ffffff; padding:10px; border-radius:8px;">
+          👉 원어민 리라이팅:
+          <div style="margin-top:4px; font-weight:600; color:#334155;">${res.nativeRewrite}</div>
+          <button class="btn-sm" style="background:#e0e7ff; color:#4f46e5; border:none; border-radius:6px; cursor:pointer; margin-top:6px;" onclick="playTTS('${res.nativeRewrite.replace(/'/g, "\\'")}')">
+            🔊 원어민 발음 듣기
+          </button>
+        </div>
+      `;
+
+      if (res.recommendedPattern) {
+        recommendedNewPattern = {
+          pattern: res.recommendedPattern,
+          meaning: res.recommendedPatternMeaning
+        };
+        document.getElementById('recommendPatternTextSnowball').innerText = res.recommendedPattern;
+        document.getElementById('recommendMeaningTextSnowball').innerText = res.recommendedPatternMeaning;
+        document.getElementById('recommendAreaSnowball').classList.remove('hidden');
+      }
+    } catch(e) {
+      alert('분석 오류: ' + e.message);
+    } finally {
+      document.getElementById('btnSubmitFree').disabled = false;
+    }
+  }
+
+  function addRecommendedPatternSnowball() {
+    addRecommendedPattern();
+    document.getElementById('recommendAreaSnowball').classList.add('hidden');
+  }
+
+  function refreshCurrentSnowball() {
+    if (snowballMode === 'paragraph') {
+      loadNextSnowballParagraph();
+    } else {
+      document.getElementById('freeUserInput').value = '';
+      document.getElementById('feedbackContainerSnowball').classList.add('hidden');
     }
   }
 
   function addRecommendedPattern() {
     if (!recommendedNewPattern) return;
     const exists = patterns.some(p => p.pattern.toLowerCase() === recommendedNewPattern.pattern.toLowerCase());
-    if (exists) {
-      alert('이미 등록된 패턴입니다.');
-      return;
-    }
+    if (exists) return alert('이미 등록된 패턴입니다.');
+
     patterns.push({
-      id: Date.now().toString(),
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       pattern: recommendedNewPattern.pattern,
-      meaning: recommendedNewPattern.meaning
+      meaning: recommendedNewPattern.meaning,
+      needDrill: true
     });
     localStorage.setItem('pr_patterns', JSON.stringify(patterns));
     updateCounts();
     renderPatternList();
-
-    const btn = document.getElementById('btnAddRecommend');
-    btn.innerText = '✅ 추가 완료!';
-    btn.style.background = '#94a3b8';
-    btn.disabled = true;
-  }
-
-  function nextDrill() {
-    loadDrill();
+    alert(`[${recommendedNewPattern.pattern}] 패턴이 내 단어장에 추가되었습니다!`);
+    document.getElementById('recommendAreaDrill').classList.add('hidden');
   }
 
   async function registerNewPattern() {
@@ -735,17 +1239,18 @@
     btn.disabled = true;
     btn.innerText = 'AI 분석 중...';
 
-    const prompt = `사용자가 새로운 표현을 등록하려 합니다: "${intent}" (추가 메모: "${memo}")
-    원어민이 가장 자주 쓰는 영어 핵심 패턴 1개와 한국어 뉘앙스를 정리해주세요.
+    const prompt = `새로운 표현 등록: "${intent}" (추가 메모: "${memo}")
+    원어민 핵심 패턴 1개와 한국어 뉘앙스 정리:
     JSON 형식:
     { "pattern": "핵심 패턴", "meaning": "한국어 뉘앙스 설명" }`;
 
     try {
       const res = await callGeminiApi(apiKey, prompt);
       patterns.push({
-        id: Date.now().toString(),
+        id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
         pattern: res.pattern,
-        meaning: res.meaning + (memo ? ` [${memo}]` : '')
+        meaning: res.meaning + (memo ? ` [${memo}]` : ''),
+        needDrill: true
       });
       localStorage.setItem('pr_patterns', JSON.stringify(patterns));
       document.getElementById('inputIntent').value = '';
@@ -754,10 +1259,10 @@
       renderPatternList();
       alert(`[${res.pattern}] 패턴이 등록되었습니다!`);
     } catch(e) {
-      alert('등록 중 에러: ' + e.message);
+      alert('등록 오류: ' + e.message);
     } finally {
       btn.disabled = false;
-      btn.innerText = 'AI 분석 및 패턴 등록';
+      btn.innerText = 'AI 분석 및 단일 패턴 등록';
     }
   }
 
@@ -779,7 +1284,12 @@
       <div class="list-item">
         <div class="item-head">
           <span class="item-title">${p.pattern}</span>
-          <button class="delete-btn" onclick="deletePattern('${p.id}')">✕</button>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="badge ${p.needDrill ? 'badge-need' : 'badge-mastered'}" style="cursor:pointer;" onclick="togglePatternNeedDrill('${p.id}')">
+              ${p.needDrill ? '🔁 집중연습 중' : '👑 숙달완료'}
+            </span>
+            <button class="delete-btn" onclick="deletePattern('${p.id}')">✕</button>
+          </div>
         </div>
         <div class="item-sub">${p.meaning}</div>
       </div>
@@ -813,6 +1323,42 @@
     localStorage.removeItem('pr_mistakes');
     updateCounts();
     renderMistakes();
+  }
+
+  function exportData() {
+    const dataStr = JSON.stringify({ patterns: patterns, mistakes: mistakes }, null, 2);
+    navigator.clipboard.writeText(dataStr).then(() => {
+      alert('📋 내 패턴 데이터가 복사되었습니다!
+다른 기기에서 [가져오기]를 진행하세요.');
+    }).catch(() => {
+      prompt('아래 데이터를 복사하세요:', dataStr);
+    });
+  }
+
+  function importData() {
+    const raw = document.getElementById('importArea').value.trim();
+    if (!raw) return alert('붙여넣을 데이터가 없습니다.');
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed.patterns && Array.isArray(parsed.patterns)) {
+        parsed.patterns.forEach(newP => {
+          if (!patterns.some(p => p.pattern.toLowerCase() === newP.pattern.toLowerCase())) {
+            patterns.push(newP);
+          }
+        });
+        localStorage.setItem('pr_patterns', JSON.stringify(patterns));
+        updateCounts();
+        renderPatternList();
+        document.getElementById('importArea').value = '';
+        alert(`✅ 성공적으로 ${parsed.patterns.length}개의 패턴을 병합하여 가져왔습니다!`);
+        showTab('patterns');
+      } else {
+        alert('올바른 패턴 데이터 형식이 아닙니다.');
+      }
+    } catch(e) {
+      alert('데이터 파싱 오류: 올바른 JSON 데이터를 붙여넣어주세요.');
+    }
   }
 </script>
 </body>
