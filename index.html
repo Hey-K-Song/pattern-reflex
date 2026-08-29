@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pattern Reflex - 1초 패턴 회화 트레이너</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+    }
+    .app-container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card {
+      background: var(--card);
+      padding: 16px;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+      border: 1px solid var(--border);
+    }
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .api-badge {
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #e0e7ff;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 10px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px 4px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--card);
+      color: var(--primary);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    .hidden { display: none !important; }
+    input, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 15px;
+      margin-top: 6px;
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+    }
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; margin-top: 10px; }
+    .btn-primary:active { background: var(--primary-hover); transform: scale(0.99); }
+    .btn-success { background: var(--success); color: white; margin-top: 10px; }
+    .btn-sm { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
+    
+    .drill-target {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .target-chip {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+    .target-pattern {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e1b4b;
+    }
+    .target-meaning {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .prompt-box {
+      background: #f1f5f9;
+      border-left: 4px solid var(--primary);
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+    
+    /* Voice Input Box */
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .input-row input {
+      margin-top: 0;
+      flex: 1;
+    }
+    .mic-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .mic-btn.recording {
+      background: #ef4444;
+      color: white;
+      border-color: #dc2626;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .feedback-box {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .feedback-box.correct { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+    .feedback-box.incorrect { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; }
+    .feedback-box.suggest { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    
+    .recommendation-card {
+      margin-top: 12px;
+      background: #f0fdf4;
+      border: 1px dashed var(--success);
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .recommend-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: #15803d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .recommend-body {
+      font-size: 14px;
+      font-weight: 600;
+      color: #14532d;
+    }
+    .btn-add-pattern {
+      background: var(--success);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      align-self: flex-start;
+    }
+    
+    .list-item {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+    .list-item .item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .list-item .item-title { font-weight: 700; font-size: 15px; }
+    .list-item .item-sub { font-size: 13px; color: var(--muted); }
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px 8px;
+    }
+    .delete-btn:hover { color: var(--accent); }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      color: #475569;
+      font-weight: 600;
+    }
+    .tts-btn {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      margin-left: 4px;
+      font-size: 14px;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Top Bar -->
+  <div class="card" style="padding: 12px 16px;">
+    <div class="header-bar">
+      <div class="title">⚡ Pattern Reflex</div>
+      <div class="api-badge" id="apiStatusBadge" onclick="toggleApiSettings()">🔑 API Key 설정</div>
+    </div>
+    
+    <!-- API Setting Area -->
+    <div id="apiConfig" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+      <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">
+        Google AI Studio 무료 API Key를 입력하세요.
+      </div>
+      <input type="password" id="apiKeyInput" placeholder="AIzaSy... 로 시작하는 API 키 붙여넣기" />
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="btn btn-primary" style="margin:0; flex:1;" onclick="testAndSaveApiKey()">연결 테스트 & 저장</button>
+        <button class="btn btn-sm" style="background:#e2e8f0; color:#475569;" onclick="toggleApiSettings()">닫기</button>
+      </div>
+      <div id="apiTestStatus" style="font-size:12px; margin-top:6px; font-weight:600;"></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('drill')">🎯 1초 훈련</button>
+    <button class="tab-btn" onclick="showTab('patterns')">📚 내 패턴 (<span id="patternCount">0</span>)</button>
+    <button class="tab-btn" onclick="showTab('mistakes')">📝 오답노트 (<span id="mistakeCount">0</span>)</button>
+  </div>
+
+  <!-- 1. Drill Tab -->
+  <div id="drillSection" class="card">
+    <div id="emptyPatternWarning" class="hidden" style="text-align: center; padding: 24px 8px;">
+      <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">등록된 패턴이 없습니다!</div>
+      <div style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">[내 패턴] 탭에서 연습하고 싶은 표현을 추가해보세요.</div>
+      <button class="btn btn-primary" onclick="showTab('patterns')">패턴 추가하러 가기</button>
+    </div>
+
+    <div id="drillPlayArea">
+      <div class="drill-target">
+        <span class="target-chip">Target Pattern</span>
+        <div class="target-pattern" id="currentTargetPattern">I was thinking of -ing</div>
+        <div class="target-meaning" id="currentTargetMeaning">~할까 생각 중이야 (확정 전 고민/제안)</div>
+      </div>
+
+      <div style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px;">상황 제시 (마이크 버튼을 누르고 바로 말해보세요)</div>
+      <div class="prompt-box" id="currentKoreanSentence">문장 로딩 중...</div>
+
+      <!-- Input + Voice Mic Row -->
+      <div class="input-row">
+        <input type="text" id="userInput" placeholder="영어로 즉시 뱉어보세요" onkeypress="if(event.key==='Enter') submitAnswer();" />
+        <button class="mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="음성으로 말하기">🎙️</button>
+      </div>
+      <div id="speechStatus" style="font-size: 11px; color: var(--muted); margin-top: 4px; padding-left: 2px;"></div>
+
+      <button class="btn btn-primary" id="btnSubmit" onclick="submitAnswer()">제출 & AI 정밀 채점</button>
+
+      <!-- Feedback Area -->
+      <div id="feedbackContainer" class="hidden">
+        <div id="feedbackText" class="feedback-box"></div>
+        
+        <!-- Recommendation Area -->
+        <div id="recommendArea" class="recommendation-card hidden">
+          <div class="recommend-header">
+            <span>✨ 원어민 추천 패턴 발견</span>
+            <span class="badge">원터치 추가</span>
+          </div>
+          <div class="recommend-body" id="recommendPatternText">-</div>
+          <div style="font-size: 12px; color: #166534;" id="recommendMeaningText">-</div>
+          <button class="btn-add-pattern" id="btnAddRecommend" onclick="addRecommendedPattern()">
+            ➕ 이 패턴 내 단어장에 즉시 추가
+          </button>
+        </div>
+
+        <button class="btn btn-success" id="btnNextDrill" onclick="nextDrill()">다음 문장 훈련 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Patterns Tab -->
+  <div id="patternsSection" class="card hidden">
+    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 4px;">새 표현 / 뉘앙스 추가</h3>
+    <p style="font-size: 13px; color: var(--muted); margin-bottom: 10px;">
+      한국어 뉘앙스나 미드/유튜브에서 본 영어 표현을 입력하세요.
+    </p>
+
+    <input type="text" id="inputIntent" placeholder="한국어 뉘앙스 또는 영어 표현 입력..." />
+    <input type="text" id="inputCustomMeaning" placeholder="추가 메모/상황 (선택 사항)" />
+    <button class="btn btn-primary" id="btnAddPattern" onclick="registerNewPattern()">AI 분석 및 패턴 등록</button>
+
+    <h4 style="font-size: 14px; font-weight: 700; margin-top: 20px; margin-bottom: 8px;">등록된 패턴 목록</h4>
+    <div id="patternListContainer"></div>
+  </div>
+
+  <!-- 3. Mistakes Tab -->
+  <div id="mistakesSection" class="card hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <h3 style="font-size: 16px; font-weight: 800;">오답노트 & 취약점</h3>
+      <button class="btn btn-sm" style="background:#fee2e2; color:#ef4444;" onclick="clearMistakes()">비우기</button>
+    </div>
+    <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">패턴을 제때 인출하지 못했거나 어색하게 말했던 기록입니다.</p>
+    <div id="mistakeListContainer"></div>
+  </div>
+</div>
+
+<script>
+  const DEFAULT_PATTERNS = [
+    { id: '1', pattern: 'I was thinking of -ing', meaning: '~할까 생각 중이야 (확정 전 고민/제안)' },
+    { id: '2', pattern: 'I was wondering if you could', meaning: '혹시 ~해줄 수 있나 해서 (조심스러운 부탁)' },
+    { id: '3', pattern: 'Turns out that', meaning: '알고 보니까 ~하더라고 (반전/발견)' }
+  ];
+
+  let patterns = JSON.parse(localStorage.getItem('pr_patterns')) || DEFAULT_PATTERNS;
+  let mistakes = JSON.parse(localStorage.getItem('pr_mistakes')) || [];
+  let currentDrillData = null;
+  let recommendedNewPattern = null;
+
+  // Web Speech STT setup
+  let recognition = null;
+  let isRecording = false;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    updateCounts();
+    checkApiKeyUI();
+    renderPatternList();
+    renderMistakes();
+    initSpeechRecognition();
+    loadDrill();
+  });
+
+  function initSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      document.getElementById('speechStatus').innerText = '※ 이 브라우저는 음성 인식을 지원하지 않습니다. 키보드를 사용해주세요.';
+      document.getElementById('micBtn').style.opacity = '0.5';
+      return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-US'; // 영어 발화 인식
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      isRecording = true;
+      const mic = document.getElementById('micBtn');
+      mic.classList.add('recording');
+      mic.innerText = '⏹️';
+      document.getElementById('speechStatus').innerText = '🎙️ 듣고 있습니다... 영어로 말해보세요!';
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      document.getElementById('userInput').value = transcript;
+      document.getElementById('speechStatus').innerText = `인식 완료: "${transcript}"`;
+    };
+
+    recognition.onerror = (event) => {
+      document.getElementById('speechStatus').innerText = `음성 인식 오류: ${event.error}`;
+      stopRecordingUI();
+    };
+
+    recognition.onend = () => {
+      stopRecordingUI();
+    };
+  }
+
+  function stopRecordingUI() {
+    isRecording = false;
+    const mic = document.getElementById('micBtn');
+    mic.classList.remove('recording');
+    mic.innerText = '🎙️';
+  }
+
+  function toggleSpeechRecognition() {
+    if (!recognition) return alert('현재 브라우저 환경에서 음성 인식을 지원하지 않습니다 (Chrome/Safari 권장).');
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch(e) {
+        recognition.stop();
+      }
+    }
+  }
+
+  function playTTS(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function updateCounts() {
+    document.getElementById('patternCount').innerText = patterns.length;
+    document.getElementById('mistakeCount').innerText = mistakes.length;
+  }
+
+  function checkApiKeyUI() {
+    const key = localStorage.getItem('pr_gemini_key');
+    if (!key) {
+      document.getElementById('apiConfig').classList.remove('hidden');
+      document.getElementById('apiStatusBadge').style.background = '#fee2e2';
+      document.getElementById('apiStatusBadge').style.color = '#dc2626';
+      document.getElementById('apiStatusBadge').innerText = '⚠️ API Key 미등록';
+    } else {
+      document.getElementById('apiKeyInput').value = key;
+      document.getElementById('apiConfig').classList.add('hidden');
+      document.getElementById('apiStatusBadge').style.background = '#e0e7ff';
+      document.getElementById('apiStatusBadge').style.color = '#4f46e5';
+      document.getElementById('apiStatusBadge').innerText = '🔑 API Key 연동됨';
+    }
+  }
+
+  function toggleApiSettings() {
+    document.getElementById('apiConfig').classList.toggle('hidden');
+  }
+
+  async function testAndSaveApiKey() {
+    const key = document.getElementById('apiKeyInput').value.trim();
+    const statusDiv = document.getElementById('apiTestStatus');
+    if (!key) {
+      statusDiv.style.color = '#dc2626';
+      statusDiv.innerText = '❌ 키를 입력해주세요.';
+      return;
+    }
+    statusDiv.style.color = '#4f46e5';
+    statusDiv.innerText = '⏳ 최신 Gemini 모델과 통신 확인 중...';
+
+    try {
+      await callGeminiApi(key, 'Hello, return {"status":"ok"} in json format');
+      localStorage.setItem('pr_gemini_key', key);
+      statusDiv.style.color = '#16a34a';
+      statusDiv.innerText = '✅ 연결 성공! 정상적으로 저장되었습니다.';
+      checkApiKeyUI();
+      setTimeout(() => {
+        document.getElementById('apiConfig').classList.add('hidden');
+        loadDrill();
+      }, 700);
+    } catch(err) {
+      statusDiv.style.color = '#dc2626';
+      statusDiv.innerText = `❌ 연결 실패: ${err.message}`;
+    }
+  }
+
+  function showTab(tabName) {
+    document.querySelectorAll('.tabs .tab-btn').forEach((btn, idx) => {
+      btn.classList.toggle('active', 
+        (tabName === 'drill' && idx === 0) || 
+        (tabName === 'patterns' && idx === 1) || 
+        (tabName === 'mistakes' && idx === 2)
+      );
+    });
+    document.getElementById('drillSection').classList.toggle('hidden', tabName !== 'drill');
+    document.getElementById('patternsSection').classList.toggle('hidden', tabName !== 'patterns');
+    document.getElementById('mistakesSection').classList.toggle('hidden', tabName !== 'mistakes');
+  }
+
+  async function callGeminiApi(apiKey, promptText) {
+    const candidateModels = ['gemini-3.6-flash', 'gemini-2.5-flash'];
+    let lastError = null;
+
+    for (const model of candidateModels) {
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: { responseMimeType: "application/json" }
+          })
+        });
+
+        if (!response.ok) {
+          const errorJson = await response.json().catch(() => ({}));
+          throw new Error(errorJson.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!candidateText) throw new Error('구글 API에서 빈 응답이 반환되었습니다.');
+        return JSON.parse(candidateText);
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError;
+  }
+
+  async function loadDrill() {
+    if (patterns.length === 0) {
+      document.getElementById('emptyPatternWarning').classList.remove('hidden');
+      document.getElementById('drillPlayArea').classList.add('hidden');
+      return;
+    }
+    document.getElementById('emptyPatternWarning').classList.add('hidden');
+    document.getElementById('drillPlayArea').classList.remove('hidden');
+    document.getElementById('feedbackContainer').classList.add('hidden');
+    document.getElementById('recommendArea').classList.add('hidden');
+    document.getElementById('btnSubmit').disabled = false;
+    document.getElementById('userInput').value = '';
+    document.getElementById('speechStatus').innerText = '';
+
+    const randomPattern = patterns[Math.floor(Math.random() * patterns.length)];
+    document.getElementById('currentTargetPattern').innerText = randomPattern.pattern;
+    document.getElementById('currentTargetMeaning').innerText = randomPattern.meaning;
+    document.getElementById('currentKoreanSentence').innerText = "상황 문장 로딩 중...";
+
+    const apiKey = localStorage.getItem('pr_gemini_key');
+    if (!apiKey) {
+      document.getElementById('currentKoreanSentence').innerText = "API Key를 상단에서 등록해주세요.";
+      return;
+    }
+
+    const prompt = `영어 패턴 "${randomPattern.pattern}" (뜻: ${randomPattern.meaning})을 활용할 수 있는 쉽고 캐주얼한 일상 한국어 한 문장과 원어민 모범 답안을 만드세요.
+    JSON 형식:
+    { "koreanSentence": "문장", "modelAnswer": "모범답안" }`;
+
+    try {
+      const res = await callGeminiApi(apiKey, prompt);
+      currentDrillData = {
+        patternId: randomPattern.id,
+        pattern: randomPattern.pattern,
+        meaning: randomPattern.meaning,
+        koreanSentence: res.koreanSentence,
+        modelAnswer: res.modelAnswer
+      };
+      document.getElementById('currentKoreanSentence').innerText = `"${res.koreanSentence}"`;
+    } catch(err) {
+      document.getElementById('currentKoreanSentence').innerText = `문장 생성 실패 (${err.message})`;
+    }
+  }
+
+  async function submitAnswer() {
+    const userAns = document.getElementById('userInput').value.trim();
+    if (!userAns) return alert('답변을 입력하거나 마이크로 말씀해주세요.');
+
+    const apiKey = localStorage.getItem('pr_gemini_key');
+    if (!apiKey) {
+      alert('API Key를 먼저 등록해주세요.');
+      toggleApiSettings();
+      return;
+    }
+
+    document.getElementById('btnSubmit').disabled = true;
+    document.getElementById('feedbackContainer').classList.remove('hidden');
+    document.getElementById('feedbackText').className = 'feedback-box suggest';
+    document.getElementById('feedbackText').innerText = "AI가 발화를 정밀 채점 중입니다...";
+
+    const prompt = `당신은 영어 회화 전문 코치입니다.
+    - 한국어 문장: "${currentDrillData.koreanSentence}"
+    - 타겟 패턴: "${currentDrillData.pattern}"
+    - 모범 답안: "${currentDrillData.modelAnswer}"
+    - 사용자 답변: "${userAns}"
+
+    JSON 형식으로만 반환:
+    {
+      "isCorrect": true/false (패턴을 적절히 살렸으면 true),
+      "feedback": "간결한 코칭 피드백",
+      "nativeExpression": "자연스러운 원어민 표현",
+      "hasNewPatternRecommendation": true/false,
+      "recommendedPattern": "추천할 영어 핵심 패턴 (청크)",
+      "recommendedPatternMeaning": "추천 패턴 한국어 뉘앙스"
+    }`;
+
+    try {
+      const res = await callGeminiApi(apiKey, prompt);
+      const fbBox = document.getElementById('feedbackText');
+      fbBox.className = `feedback-box ${res.isCorrect ? 'correct' : 'incorrect'}`;
+      
+      fbBox.innerHTML = `
+        <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">
+          ${res.isCorrect ? '🎉 완벽한 반사신경입니다!' : '💡 이렇게 말하면 훨씬 자연스러워요'}
+        </div>
+        <div>${res.feedback}</div>
+        <div style="margin-top: 8px; font-weight: 700; color: #1e1b4b; display: flex; align-items: center; flex-wrap: wrap;">
+          👉 네이티브 추천: <span style="text-decoration: underline; margin-left: 4px;">${res.nativeExpression}</span>
+          <span class="tts-btn" onclick="playTTS('${res.nativeExpression.replace(/'/g, "\\'")}')" title="원어민 발음 듣기"> 🔊</span>
+        </div>
+      `;
+
+      if (res.hasNewPatternRecommendation && res.recommendedPattern) {
+        recommendedNewPattern = {
+          pattern: res.recommendedPattern,
+          meaning: res.recommendedPatternMeaning
+        };
+        document.getElementById('recommendPatternText').innerText = res.recommendedPattern;
+        document.getElementById('recommendMeaningText').innerText = res.recommendedPatternMeaning;
+        document.getElementById('recommendArea').classList.remove('hidden');
+      } else {
+        document.getElementById('recommendArea').classList.add('hidden');
+      }
+
+      if (!res.isCorrect) {
+        mistakes.unshift({
+          id: Date.now().toString(),
+          targetPattern: currentDrillData.pattern,
+          korean: currentDrillData.koreanSentence,
+          userAns: userAns,
+          nativeExpression: res.nativeExpression,
+          date: new Date().toLocaleDateString()
+        });
+        localStorage.setItem('pr_mistakes', JSON.stringify(mistakes));
+        updateCounts();
+        renderMistakes();
+      }
+    } catch (e) {
+      alert('채점 중 오류: ' + e.message);
+      document.getElementById('btnSubmit').disabled = false;
+    }
+  }
+
+  function addRecommendedPattern() {
+    if (!recommendedNewPattern) return;
+    const exists = patterns.some(p => p.pattern.toLowerCase() === recommendedNewPattern.pattern.toLowerCase());
+    if (exists) {
+      alert('이미 등록된 패턴입니다.');
+      return;
+    }
+    patterns.push({
+      id: Date.now().toString(),
+      pattern: recommendedNewPattern.pattern,
+      meaning: recommendedNewPattern.meaning
+    });
+    localStorage.setItem('pr_patterns', JSON.stringify(patterns));
+    updateCounts();
+    renderPatternList();
+
+    const btn = document.getElementById('btnAddRecommend');
+    btn.innerText = '✅ 추가 완료!';
+    btn.style.background = '#94a3b8';
+    btn.disabled = true;
+  }
+
+  function nextDrill() {
+    loadDrill();
+  }
+
+  async function registerNewPattern() {
+    const intent = document.getElementById('inputIntent').value.trim();
+    const memo = document.getElementById('inputCustomMeaning').value.trim();
+    if (!intent) return alert('추가할 표현을 입력하세요.');
+
+    const apiKey = localStorage.getItem('pr_gemini_key');
+    if (!apiKey) return alert('상단에서 API Key를 먼저 등록해주세요.');
+
+    const btn = document.getElementById('btnAddPattern');
+    btn.disabled = true;
+    btn.innerText = 'AI 분석 중...';
+
+    const prompt = `사용자가 새로운 표현을 등록하려 합니다: "${intent}" (추가 메모: "${memo}")
+    원어민이 가장 자주 쓰는 영어 핵심 패턴 1개와 한국어 뉘앙스를 정리해주세요.
+    JSON 형식:
+    { "pattern": "핵심 패턴", "meaning": "한국어 뉘앙스 설명" }`;
+
+    try {
+      const res = await callGeminiApi(apiKey, prompt);
+      patterns.push({
+        id: Date.now().toString(),
+        pattern: res.pattern,
+        meaning: res.meaning + (memo ? ` [${memo}]` : '')
+      });
+      localStorage.setItem('pr_patterns', JSON.stringify(patterns));
+      document.getElementById('inputIntent').value = '';
+      document.getElementById('inputCustomMeaning').value = '';
+      updateCounts();
+      renderPatternList();
+      alert(`[${res.pattern}] 패턴이 등록되었습니다!`);
+    } catch(e) {
+      alert('등록 중 에러: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerText = 'AI 분석 및 패턴 등록';
+    }
+  }
+
+  function deletePattern(id) {
+    if (!confirm('이 패턴을 삭제하시겠습니까?')) return;
+    patterns = patterns.filter(p => p.id !== id);
+    localStorage.setItem('pr_patterns', JSON.stringify(patterns));
+    updateCounts();
+    renderPatternList();
+  }
+
+  function renderPatternList() {
+    const list = document.getElementById('patternListContainer');
+    if (patterns.length === 0) {
+      list.innerHTML = '<div style="color:var(--muted); font-size:13px; padding:8px 0;">등록된 패턴이 없습니다.</div>';
+      return;
+    }
+    list.innerHTML = patterns.map(p => `
+      <div class="list-item">
+        <div class="item-head">
+          <span class="item-title">${p.pattern}</span>
+          <button class="delete-btn" onclick="deletePattern('${p.id}')">✕</button>
+        </div>
+        <div class="item-sub">${p.meaning}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderMistakes() {
+    const list = document.getElementById('mistakeListContainer');
+    if (mistakes.length === 0) {
+      list.innerHTML = '<div style="color:var(--muted); font-size:13px; padding:8px 0;">오답 기록이 없습니다.</div>';
+      return;
+    }
+    list.innerHTML = mistakes.slice(0, 20).map(m => `
+      <div class="list-item" style="border-left: 4px solid var(--accent);">
+        <div class="item-head">
+          <span class="badge" style="background:#fee2e2; color:#ef4444;">${m.date} | ${m.targetPattern}</span>
+        </div>
+        <div style="font-weight:700; font-size:14px; margin-top:4px;">"${m.korean}"</div>
+        <div style="font-size:13px; color:var(--muted);">내 답변: ${m.userAns}</div>
+        <div style="font-size:13px; color:var(--success); font-weight:600;">
+          👉 추천: ${m.nativeExpression}
+          <span class="tts-btn" onclick="playTTS('${m.nativeExpression.replace(/'/g, "\\'")}')"> 🔊</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function clearMistakes() {
+    if (!confirm('오답노트를 모두 비우시겠습니까?')) return;
+    mistakes = [];
+    localStorage.removeItem('pr_mistakes');
+    updateCounts();
+    renderMistakes();
+  }
+</script>
+</body>
+</html>
