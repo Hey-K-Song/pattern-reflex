@@ -584,7 +584,7 @@
       setTimeout(() => {
         const config = document.getElementById('apiConfig');
         if (config) config.classList.add('hidden');
-        if (!currentDrillData) loadNextDrill();
+        loadNextDrill();
       }, 500);
     } catch(err) {
       if (statusDiv) {
@@ -612,6 +612,7 @@
     if (s2) s2.classList.toggle('hidden', stageNum !== '2');
     if (s3) s3.classList.toggle('hidden', stageNum !== '3');
 
+    if (stageNum === '1' && !currentDrillData) loadNextDrill();
     if (stageNum === '2' && !currentBlindData) loadNextBlind();
     if (stageNum === '3') {
       renderAvailableChips();
@@ -719,21 +720,34 @@
   }
 
   async function callGeminiApi(apiKey, promptText) {
-    // Upgraded to latest Google Gemini 3 models (removes deprecated gemini-2.5-flash)
-    const candidateModels = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3-flash-preview'];
+    // Model candidate list with modern Gemini 3 & Gemini 2 models
+    const candidateModels = [
+      'gemini-3.6-flash',
+      'gemini-3-flash-preview',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash'
+    ];
     let lastError = null;
 
     for (const model of candidateModels) {
       try {
         const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey;
+        
+        // 10 second timeout per request to avoid hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: promptText }] }],
             generationConfig: { responseMimeType: 'application/json' }
-          })
+          }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           const errorJson = await response.json().catch(() => ({}));
@@ -798,14 +812,16 @@
       streak.innerText = randomPattern.needDrill ? '집중 훈련 중' : '숙달 완료됨';
       streak.className = 'badge ' + (randomPattern.needDrill ? 'badge-need' : 'badge-mastered');
     }
-    document.getElementById('currentKoreanSentence').innerText = '상황 문장 로딩 중...';
 
     const apiKey = getStoredApiKey();
     if (!apiKey) {
+      document.getElementById('currentKoreanSentence').innerText = '⚠️ 상단 [🔑 API Key 설정]을 눌러 API 키를 먼저 저장해주세요.';
       const apiC = document.getElementById('apiConfig');
       if (apiC) apiC.classList.remove('hidden');
       return;
     }
+
+    document.getElementById('currentKoreanSentence').innerText = '상황 문장 로딩 중...';
 
     const prompt = '영어 패턴 "' + randomPattern.pattern + '" (뜻: ' + randomPattern.meaning + ')을 활용할 수 있는 짧고 생생한 일상 한국어 한 문장과 원어민 모범 답안을 만드세요.\nJSON 형식:\n{ "koreanSentence": "문장", "modelAnswer": "모범답안" }';
 
@@ -820,7 +836,7 @@
       };
       document.getElementById('currentKoreanSentence').innerText = '"' + res.koreanSentence + '"';
     } catch(err) {
-      document.getElementById('currentKoreanSentence').innerText = '문장 생성 오류 (' + err.message + ')';
+      document.getElementById('currentKoreanSentence').innerText = '문장 생성 오류: ' + (err.message || '연결 실패') + '\n(상단 API Key 설정을 확인해주세요)';
     }
   }
 
@@ -834,16 +850,18 @@
     if (sBtn) sBtn.disabled = false;
     const bInp = document.getElementById('blindUserInput');
     if (bInp) bInp.value = '';
-    document.getElementById('blindKoreanSentence').innerText = '실전 문제 로딩 중...';
 
     const randomPattern = getPrioritizedPattern();
     if (!randomPattern) return;
     const apiKey = getStoredApiKey();
     if (!apiKey) {
+      document.getElementById('blindKoreanSentence').innerText = '⚠️ 상단 [🔑 API Key 설정]을 눌러 API 키를 먼저 저장해주세요.';
       const apiC = document.getElementById('apiConfig');
       if (apiC) apiC.classList.remove('hidden');
       return;
     }
+
+    document.getElementById('blindKoreanSentence').innerText = '실전 문제 로딩 중...';
 
     const prompt = '영어 패턴 "' + randomPattern.pattern + '" (뜻: ' + randomPattern.meaning + ')을 자연스럽게 활용할 수 있는 일상 한국어 한 문장과 원어민 모범 답안을 만드세요.\nJSON 형식:\n{ "koreanSentence": "문장", "modelAnswer": "모범답안" }';
 
@@ -858,7 +876,7 @@
       };
       document.getElementById('blindKoreanSentence').innerText = '"' + res.koreanSentence + '"';
     } catch(err) {
-      document.getElementById('blindKoreanSentence').innerText = '실전 문제 로드 오류 (' + err.message + ')';
+      document.getElementById('blindKoreanSentence').innerText = '실전 문제 로드 오류: ' + (err.message || '연결 실패');
     }
   }
 
@@ -987,7 +1005,6 @@
     if (sBtn) sBtn.disabled = false;
     const uInp = document.getElementById('snowballUserInput');
     if (uInp) uInp.value = '';
-    document.getElementById('snowballKoreanText').innerText = '스노우볼 ' + count + '개 패턴 결합 문단 생성 중...';
 
     const shuffled = [...patterns].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, Math.min(count, patterns.length));
@@ -995,10 +1012,13 @@
 
     const apiKey = getStoredApiKey();
     if (!apiKey) {
+      document.getElementById('snowballKoreanText').innerText = '⚠️ 상단 [🔑 API Key 설정]을 눌러 API 키를 먼저 저장해주세요.';
       const apiC = document.getElementById('apiConfig');
       if (apiC) apiC.classList.remove('hidden');
       return;
     }
+
+    document.getElementById('snowballKoreanText').innerText = '스노우볼 ' + count + '개 패턴 결합 문단 생성 중...';
 
     const prompt = '자연스러운 일상 한국어 연결 문단(2~4문장)과 원어민 모범 답안을 만드세요.\n반드시 다음 ' + selected.length + '개 영어 패턴을 순서대로 녹여내야 합니다:\n' + patternSummary + '\n\nJSON 형식:\n{\n  "koreanParagraph": "자연스러운 한국어 연결 문단",\n  "modelParagraph": "위 패턴들이 녹아든 원어민 모범 영어 문단"\n}';
 
@@ -1011,7 +1031,7 @@
       };
       document.getElementById('snowballKoreanText').innerText = res.koreanParagraph;
     } catch(err) {
-      document.getElementById('snowballKoreanText').innerText = '문단 생성 오류 (' + err.message + ')';
+      document.getElementById('snowballKoreanText').innerText = '문단 생성 오류: ' + (err.message || '연결 실패');
     }
   }
 
@@ -1374,6 +1394,7 @@
 
     const savedKey = getStoredApiKey();
     if (!savedKey) {
+      document.getElementById('currentKoreanSentence').innerText = '⚠️ 상단 [🔑 API Key 설정]을 눌러 API 키를 먼저 저장해주세요.';
       const apiC = document.getElementById('apiConfig');
       if (apiC) apiC.classList.remove('hidden');
     } else {
