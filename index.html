@@ -17,6 +17,7 @@
       --success: #10b981;
       --snow: #0284c7;
       --step2: #7c3aed;
+      --challenge: #ea580c;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
@@ -48,18 +49,44 @@
       color: var(--primary);
       letter-spacing: -0.5px;
     }
-    .api-badge {
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .header-badge {
       font-size: 12px;
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: 8px;
       cursor: pointer;
-      background: #e0e7ff;
-      color: var(--primary);
       font-weight: 800;
       user-select: none;
       border: none;
     }
-    .api-badge:active { opacity: 0.7; }
+    .badge-api { background: #e0e7ff; color: var(--primary); }
+    .badge-settings { background: #ffedd5; color: var(--challenge); }
+    .header-badge:active { opacity: 0.7; }
+
+    /* Challenge Progress Banner */
+    .challenge-banner {
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border: 1px solid #fed7aa;
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: #9a3412;
+    }
+    .challenge-day-tag {
+      background: var(--challenge);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
 
     /* Main 3 Stages Tabs */
     .stage-tabs {
@@ -115,7 +142,7 @@
     }
 
     .hidden { display: none !important; }
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 13px 14px;
       border-radius: 10px;
@@ -125,7 +152,7 @@
       outline: none;
       font-family: inherit;
     }
-    input:focus, textarea:focus { border-color: var(--primary); }
+    input:focus, textarea:focus, select:focus { border-color: var(--primary); }
 
     .btn {
       width: 100%;
@@ -145,6 +172,7 @@
     .btn-primary { background: var(--primary); color: white; margin-top: 10px; }
     .btn-success { background: var(--success); color: white; margin-top: 10px; }
     .btn-secondary { background: #f1f5f9; color: #334155; }
+    .btn-refresh { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; margin-top: 10px; }
     .btn-sm { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
     
     .prompt-box {
@@ -201,6 +229,37 @@
     .feedback-box.correct { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
     .feedback-box.incorrect { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; }
     .feedback-box.suggest { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+
+    /* Native expression recommendation box */
+    .native-rec-card {
+      background: #ffffff;
+      border: 1px dashed #6366f1;
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .native-rec-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .btn-add-native {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-add-native:active { opacity: 0.8; }
     
     .btn-re-drill {
       background: #fef3c7;
@@ -286,7 +345,19 @@
   <!-- Top Bar -->
   <div class="header-bar">
     <div class="title">⚡ Pattern Reflex</div>
-    <button class="api-badge" id="apiStatusBadge">🔑 API Key 설정</button>
+    <div class="header-actions">
+      <button class="header-badge badge-settings" id="btnOpenSettings">⚙️ 챌린지 설정</button>
+      <button class="header-badge badge-api" id="apiStatusBadge">🔑 API Key</button>
+    </div>
+  </div>
+
+  <!-- Challenge Info Banner -->
+  <div class="challenge-banner" id="challengeBanner">
+    <div>
+      <span class="challenge-day-tag" id="chDayLabel">Day 1</span>
+      <span style="margin-left:6px;" id="chGoalLabel">100일 챌린지 (오늘 목표: 3개 패턴)</span>
+    </div>
+    <span style="font-size:11px; color:#c2410c; cursor:pointer;" id="btnNextDayShortcut">다음 Day ➔</span>
   </div>
   
   <!-- Simple Toggle API Settings Area -->
@@ -305,6 +376,37 @@
     <div id="apiTestStatus" style="font-size:12px; margin-top:6px; font-weight:700;"></div>
   </div>
 
+  <!-- Settings & Challenge Configuration Area -->
+  <div id="settingsConfig" class="card hidden" style="padding: 16px; margin-bottom: 2px;">
+    <div style="font-size: 15px; font-weight: 800; margin-bottom: 4px;">⚙️ 나의 훈련 & 챌린지 설정</div>
+    
+    <div style="margin-top:8px;">
+      <label style="font-size:12px; font-weight:700; color:var(--muted);">총 챌린지 목표 일수</label>
+      <input type="number" id="cfgTotalDays" value="100" min="1" max="365" />
+    </div>
+
+    <div style="margin-top:8px;">
+      <label style="font-size:12px; font-weight:700; color:var(--muted);">현재 진행 중인 Day</label>
+      <input type="number" id="cfgCurrentDay" value="1" min="1" />
+    </div>
+
+    <div style="margin-top:8px;">
+      <label style="font-size:12px; font-weight:700; color:var(--muted);">하루 집중 연습할 패턴 개수</label>
+      <select id="cfgDailyQuota">
+        <option value="1">하루 1개 패턴 집중</option>
+        <option value="2">하루 2개 패턴 집중</option>
+        <option value="3" selected>하루 3개 패턴 집중 (추천)</option>
+        <option value="4">하루 4개 패턴 집중</option>
+        <option value="5">하루 5개 패턴 집중</option>
+      </select>
+    </div>
+
+    <div style="display:flex; gap:6px; margin-top:12px;">
+      <button class="btn btn-primary" style="margin:0; flex:1; background:var(--challenge);" id="btnSaveSettings">설정 저장 및 적용</button>
+      <button class="btn btn-sm btn-secondary" id="btnCloseSettings">닫기</button>
+    </div>
+  </div>
+
   <!-- Top Simple 3 Stages Tabs -->
   <div class="stage-tabs">
     <button class="stage-btn active" id="stgBtn1">1단계</button>
@@ -314,7 +416,7 @@
 
   <!-- 1단계: 패턴 집중 훈련 -->
   <div id="stage1Section" class="card main-stage-card">
-    <div class="stage-subtitle">1단계: 패턴 집중 훈련</div>
+    <div class="stage-subtitle">1단계: 패턴 집중 훈련 (오늘의 집중 패턴)</div>
     
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="font-size: 18px; font-weight: 900; color: #1e1b4b;" id="currentTargetPattern">-</div>
@@ -334,17 +436,31 @@
 
     <div id="feedbackContainerDrill" class="hidden">
       <div id="feedbackTextDrill" class="feedback-box"></div>
-      <button class="btn-re-drill" id="btnReDrill1">
-        🔁 이 패턴 아직 미숙함 (계속 집중 훈련)
+      
+      <!-- Native recommendation quick-add box -->
+      <div id="nativeRecBoxDrill" class="native-rec-card hidden">
+        <div class="native-rec-head">
+          <span>✨ 네이티브 추천 표현</span>
+          <button class="btn-add-native" id="btnAddNativeDrill">➕ 내 패턴에 추가</button>
+        </div>
+        <div style="font-weight:700; font-size:14px; color:#1e1b4b;" id="nativeRecTextDrill">-</div>
+      </div>
+
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-refresh" id="btnRefreshDrill" style="flex:1;">🔄 다른 예문으로 새로고침</button>
+        <button class="btn btn-success" id="btnNextDrill" style="flex:1;">다음 패턴 ➔</button>
+      </div>
+
+      <button class="btn-re-drill" id="btnReDrill1" style="width:100%; justify-content:center;">
+        🔁 이 패턴 아직 미숙함 (계속 집중 훈련 큐 등록)
       </button>
-      <button class="btn btn-success" id="btnNextDrill">다음 문장 훈련 ➔</button>
     </div>
   </div>
 
   <!-- 2단계: 실전 인출 (패턴 완전 미노출) -->
   <div id="stage2Section" class="card main-stage-card hidden">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div class="stage-subtitle" style="color: var(--step2); margin:0;">2단계: 실전 인출</div>
+      <div class="stage-subtitle" style="color: var(--step2); margin:0;">2단계: 실전 인출 (블라인드)</div>
       <button class="btn-sm" style="background:#f1f5f9; color:var(--step2); border:1px solid #ddd6fe; border-radius:6px; cursor:pointer;" id="btnHint">💡 1.5초 힌트</button>
     </div>
     <div id="blindHintBox" class="hidden" style="margin-top:8px; font-size:13px; font-weight:700; color:#7c3aed; background:#ede9fe; padding:8px; border-radius:8px; text-align:center;"></div>
@@ -361,10 +477,24 @@
 
     <div id="feedbackContainerBlind" class="hidden">
       <div id="feedbackTextBlind" class="feedback-box"></div>
-      <button class="btn-re-drill" id="btnReDrill2">
-        🔁 이 패턴 아직 미숙함 (계속 집중 훈련)
+      
+      <!-- Native recommendation quick-add box -->
+      <div id="nativeRecBoxBlind" class="native-rec-card hidden">
+        <div class="native-rec-head">
+          <span>✨ 네이티브 추천 표현</span>
+          <button class="btn-add-native" id="btnAddNativeBlind">➕ 내 패턴에 추가</button>
+        </div>
+        <div style="font-weight:700; font-size:14px; color:#1e1b4b;" id="nativeRecTextBlind">-</div>
+      </div>
+
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-refresh" id="btnRefreshBlind" style="flex:1;">🔄 다른 예문으로 새로고침</button>
+        <button class="btn btn-success" id="btnNextBlind" style="flex:1;">다음 실전 문제 ➔</button>
+      </div>
+
+      <button class="btn-re-drill" id="btnReDrill2" style="width:100%; justify-content:center;">
+        🔁 이 패턴 아직 미숙함 (계속 집중 훈련 큐 등록)
       </button>
-      <button class="btn btn-success" id="btnNextBlind">다음 실전 문제 ➔</button>
     </div>
   </div>
 
@@ -413,12 +543,18 @@
 
     <div id="feedbackContainerSnowball" class="hidden">
       <div id="feedbackTextSnowball" class="feedback-box"></div>
-      <div id="recommendAreaSnowball" class="hidden" style="background:#f0fdf4; border:1px dashed var(--success); padding:10px; border-radius:8px; margin-top:10px;">
-        <div style="font-size: 12px; font-weight: 700; color: #15803d;">✨ 추천 패턴: <span id="recommendPatternTextSnowball">-</span></div>
-        <div style="font-size: 12px; color: #166534;" id="recommendMeaningTextSnowball">-</div>
-        <button class="btn-sm btn-success" style="margin-top:6px;" id="btnAddSnowballRecommend">➕ 내 단어장에 추가</button>
+      
+      <!-- Native recommendation quick-add box -->
+      <div id="recommendAreaSnowball" class="native-rec-card hidden">
+        <div class="native-rec-head">
+          <span>✨ 네이티브 추천 표현</span>
+          <button class="btn-add-native" id="btnAddSnowballRecommend">➕ 내 패턴에 추가</button>
+        </div>
+        <div style="font-weight:700; font-size:14px; color:#1e1b4b;" id="recommendPatternTextSnowball">-</div>
+        <div style="font-size: 12px; color: var(--muted);" id="recommendMeaningTextSnowball">-</div>
       </div>
-      <button class="btn btn-success" id="btnRefreshSnowball">다음 훈련 ➔</button>
+
+      <button class="btn btn-refresh" id="btnRefreshSnowball">🔄 다른 예문/문제로 새로고침 ➔</button>
     </div>
   </div>
 
@@ -490,12 +626,19 @@
 
   let patterns = DEFAULT_PATTERNS;
   let mistakes = [];
+  let challengeConfig = {
+    totalDays: 100,
+    currentDay: 1,
+    dailyQuota: 3
+  };
 
   try {
     const savedP = localStorage.getItem('pr_patterns');
     if (savedP) patterns = JSON.parse(savedP);
     const savedM = localStorage.getItem('pr_mistakes');
     if (savedM) mistakes = JSON.parse(savedM);
+    const savedC = localStorage.getItem('pr_challenge_cfg');
+    if (savedC) challengeConfig = Object.assign(challengeConfig, JSON.parse(savedC));
   } catch(e) {
     patterns = DEFAULT_PATTERNS;
     mistakes = [];
@@ -504,7 +647,10 @@
   let currentDrillData = null;
   let currentBlindData = null;
   let currentSnowballData = null;
-  let recommendedNewPattern = null;
+  let latestNativeDrill = null;
+  let latestNativeBlind = null;
+  let latestNativeSnowball = null;
+
   let currentActiveStage = '1';
   let snowballSubMode = 'paragraph';
   let isBulkOpen = false;
@@ -523,6 +669,22 @@
     const mEl = document.getElementById('mistakeCount');
     if (pEl) pEl.innerText = patterns.length;
     if (mEl) mEl.innerText = mistakes.length;
+  }
+
+  function updateChallengeUI() {
+    const dayLabel = document.getElementById('chDayLabel');
+    const goalLabel = document.getElementById('chGoalLabel');
+    if (dayLabel) dayLabel.innerText = 'Day ' + challengeConfig.currentDay;
+    if (goalLabel) {
+      goalLabel.innerText = challengeConfig.totalDays + '일 챌린지 (오늘 목표: ' + challengeConfig.dailyQuota + '개 패턴 집중)';
+    }
+
+    const tInp = document.getElementById('cfgTotalDays');
+    const cInp = document.getElementById('cfgCurrentDay');
+    const qInp = document.getElementById('cfgDailyQuota');
+    if (tInp) tInp.value = challengeConfig.totalDays;
+    if (cInp) cInp.value = challengeConfig.currentDay;
+    if (qInp) qInp.value = challengeConfig.dailyQuota;
   }
 
   function checkApiKeyUI() {
@@ -551,6 +713,40 @@
       const status = document.getElementById('apiTestStatus');
       if (status) status.innerText = '';
     }
+  }
+
+  function toggleSettingsConfig() {
+    const cfg = document.getElementById('settingsConfig');
+    if (!cfg) return;
+    cfg.classList.toggle('hidden');
+  }
+
+  function saveChallengeSettings() {
+    const tVal = parseInt(document.getElementById('cfgTotalDays').value, 10) || 100;
+    const cVal = parseInt(document.getElementById('cfgCurrentDay').value, 10) || 1;
+    const qVal = parseInt(document.getElementById('cfgDailyQuota').value, 10) || 3;
+
+    challengeConfig.totalDays = Math.max(1, tVal);
+    challengeConfig.currentDay = Math.max(1, cVal);
+    challengeConfig.dailyQuota = Math.max(1, qVal);
+
+    localStorage.setItem('pr_challenge_cfg', JSON.stringify(challengeConfig));
+    updateChallengeUI();
+    toggleSettingsConfig();
+    alert('✅ 챌린지 설정이 저장되었습니다! (Day ' + challengeConfig.currentDay + ' / ' + challengeConfig.dailyQuota + '개 패턴)');
+    loadNextDrill();
+  }
+
+  function nextDayShortcut() {
+    challengeConfig.currentDay += 1;
+    if (challengeConfig.currentDay > challengeConfig.totalDays) {
+      alert('🎉 축하합니다! ' + challengeConfig.totalDays + '일 챌린지를 모두 완주하셨습니다!');
+      challengeConfig.currentDay = challengeConfig.totalDays;
+    }
+    localStorage.setItem('pr_challenge_cfg', JSON.stringify(challengeConfig));
+    updateChallengeUI();
+    alert('🚀 Day ' + challengeConfig.currentDay + '로 이동했습니다! 오늘의 새로운 패턴 훈련을 시작합니다.');
+    loadNextDrill();
   }
 
   async function testAndSaveApiKey() {
@@ -708,19 +904,7 @@
     }
   }
 
-  function playTTS(text) {
-    try {
-      if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.95;
-      window.speechSynthesis.speak(utterance);
-    } catch(e) {}
-  }
-
   async function callGeminiApi(apiKey, promptText) {
-    // Model candidate list with modern Gemini 3 & Gemini 2 models
     const candidateModels = [
       'gemini-3.6-flash',
       'gemini-3-flash-preview',
@@ -733,8 +917,6 @@
     for (const model of candidateModels) {
       try {
         const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey;
-        
-        // 10 second timeout per request to avoid hanging
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -765,6 +947,25 @@
     throw lastError;
   }
 
+  // Get Today's N challenge patterns
+  function getTodaysChallengePatterns() {
+    if (patterns.length === 0) return [];
+    const quota = challengeConfig.dailyQuota || 3;
+    const startIndex = ((challengeConfig.currentDay - 1) * quota) % patterns.length;
+    
+    const todays = [];
+    for (let i = 0; i < quota; i++) {
+      todays.push(patterns[(startIndex + i) % patterns.length]);
+    }
+    return todays;
+  }
+
+  function getPrioritizedPattern() {
+    const todays = getTodaysChallengePatterns();
+    if (todays.length === 0) return null;
+    return todays[Math.floor(Math.random() * todays.length)];
+  }
+
   function markForReDrill(patternId) {
     if (!patternId) return;
     const p = patterns.find(item => item.id === patternId);
@@ -785,65 +986,86 @@
     }
   }
 
-  function getPrioritizedPattern() {
-    if (patterns.length === 0) return null;
-    const needList = patterns.filter(p => p.needDrill);
-    if (needList.length > 0 && Math.random() < 0.75) {
-      return needList[Math.floor(Math.random() * needList.length)];
+  // Quick add Native Recommendation to User Patterns
+  function addNativeToPatterns(nativeText) {
+    if (!nativeText) return;
+    const clean = nativeText.trim();
+    if (!clean) return;
+
+    if (patterns.some(p => p.pattern.toLowerCase() === clean.toLowerCase())) {
+      return alert('이미 단어장에 등록된 표현입니다.');
     }
-    return patterns[Math.floor(Math.random() * patterns.length)];
+
+    patterns.push({
+      id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 4),
+      pattern: clean,
+      meaning: 'AI 원어민 추천 핵심 표현',
+      needDrill: true
+    });
+
+    localStorage.setItem('pr_patterns', JSON.stringify(patterns));
+    updateCounts();
+    renderPatternList();
+    alert('🎉 [' + clean + '] 표현이 내 패턴 단어장에 즉시 추가되었습니다!');
   }
 
-  async function loadNextDrill() {
+  // Step 1: Guided Drill
+  async function loadNextDrill(specificPattern) {
     if (patterns.length === 0) return;
     const fbC = document.getElementById('feedbackContainerDrill');
     if (fbC) fbC.classList.add('hidden');
+    const recBox = document.getElementById('nativeRecBoxDrill');
+    if (recBox) recBox.classList.add('hidden');
     const sBtn = document.getElementById('btnSubmitDrill');
     if (sBtn) sBtn.disabled = false;
     const uInp = document.getElementById('userInput');
     if (uInp) uInp.value = '';
 
-    const randomPattern = getPrioritizedPattern();
-    if (!randomPattern) return;
-    document.getElementById('currentTargetPattern').innerText = randomPattern.pattern;
-    document.getElementById('currentTargetMeaning').innerText = randomPattern.meaning;
+    const targetPattern = specificPattern || getPrioritizedPattern();
+    if (!targetPattern) return;
+
+    document.getElementById('currentTargetPattern').innerText = targetPattern.pattern;
+    document.getElementById('currentTargetMeaning').innerText = targetPattern.meaning;
     const streak = document.getElementById('drillStreakBadge');
     if (streak) {
-      streak.innerText = randomPattern.needDrill ? '집중 훈련 중' : '숙달 완료됨';
-      streak.className = 'badge ' + (randomPattern.needDrill ? 'badge-need' : 'badge-mastered');
+      streak.innerText = targetPattern.needDrill ? '집중 훈련 중' : '숙달 완료됨';
+      streak.className = 'badge ' + (targetPattern.needDrill ? 'badge-need' : 'badge-mastered');
     }
 
     const apiKey = getStoredApiKey();
     if (!apiKey) {
-      document.getElementById('currentKoreanSentence').innerText = '⚠️ 상단 [🔑 API Key 설정]을 눌러 API 키를 먼저 저장해주세요.';
+      document.getElementById('currentKoreanSentence').innerText = '⚠️ 상단 [🔑 API Key]를 눌러 API 키를 먼저 저장해주세요.';
       const apiC = document.getElementById('apiConfig');
       if (apiC) apiC.classList.remove('hidden');
       return;
     }
 
-    document.getElementById('currentKoreanSentence').innerText = '상황 문장 로딩 중...';
+    document.getElementById('currentKoreanSentence').innerText = '상황 문장 생성 중... (새로운 예문 로딩)';
 
-    const prompt = '영어 패턴 "' + randomPattern.pattern + '" (뜻: ' + randomPattern.meaning + ')을 활용할 수 있는 짧고 생생한 일상 한국어 한 문장과 원어민 모범 답안을 만드세요.\nJSON 형식:\n{ "koreanSentence": "문장", "modelAnswer": "모범답안" }';
+    const prompt = '영어 패턴 "' + targetPattern.pattern + '" (뜻: ' + targetPattern.meaning + ')을 활용할 수 있는 생생한 일상 한국어 한 문장과 원어민 모범 답안을 매번 다르게 참신하게 만드세요.\nJSON 형식:\n{ "koreanSentence": "문장", "modelAnswer": "모범답안" }';
 
     try {
       const res = await callGeminiApi(apiKey, prompt);
       currentDrillData = {
-        patternId: randomPattern.id,
-        pattern: randomPattern.pattern,
-        meaning: randomPattern.meaning,
+        patternId: targetPattern.id,
+        pattern: targetPattern.pattern,
+        meaning: targetPattern.meaning,
         koreanSentence: res.koreanSentence,
         modelAnswer: res.modelAnswer
       };
       document.getElementById('currentKoreanSentence').innerText = '"' + res.koreanSentence + '"';
     } catch(err) {
-      document.getElementById('currentKoreanSentence').innerText = '문장 생성 오류: ' + (err.message || '연결 실패') + '\n(상단 API Key 설정을 확인해주세요)';
+      document.getElementById('currentKoreanSentence').innerText = '문장 생성 오류: ' + (err.message || '연결 실패');
     }
   }
 
-  async function loadNextBlind() {
+  // Step 2: Blind Reflex Test
+  async function loadNextBlind(specificPattern) {
     if (patterns.length === 0) return;
     const fbC = document.getElementById('feedbackContainerBlind');
     if (fbC) fbC.classList.add('hidden');
+    const recBox = document.getElementById('nativeRecBoxBlind');
+    if (recBox) recBox.classList.add('hidden');
     const hBox = document.getElementById('blindHintBox');
     if (hBox) hBox.classList.add('hidden');
     const sBtn = document.getElementById('btnSubmitBlind');
@@ -851,26 +1073,27 @@
     const bInp = document.getElementById('blindUserInput');
     if (bInp) bInp.value = '';
 
-    const randomPattern = getPrioritizedPattern();
-    if (!randomPattern) return;
+    const targetPattern = specificPattern || getPrioritizedPattern();
+    if (!targetPattern) return;
+
     const apiKey = getStoredApiKey();
     if (!apiKey) {
-      document.getElementById('blindKoreanSentence').innerText = '⚠️ 상단 [🔑 API Key 설정]을 눌러 API 키를 먼저 저장해주세요.';
+      document.getElementById('blindKoreanSentence').innerText = '⚠️ 상단 [🔑 API Key]를 눌러 API 키를 먼저 저장해주세요.';
       const apiC = document.getElementById('apiConfig');
       if (apiC) apiC.classList.remove('hidden');
       return;
     }
 
-    document.getElementById('blindKoreanSentence').innerText = '실전 문제 로딩 중...';
+    document.getElementById('blindKoreanSentence').innerText = '실전 문제 생성 중... (새로운 예문 로딩)';
 
-    const prompt = '영어 패턴 "' + randomPattern.pattern + '" (뜻: ' + randomPattern.meaning + ')을 자연스럽게 활용할 수 있는 일상 한국어 한 문장과 원어민 모범 답안을 만드세요.\nJSON 형식:\n{ "koreanSentence": "문장", "modelAnswer": "모범답안" }';
+    const prompt = '영어 패턴 "' + targetPattern.pattern + '" (뜻: ' + targetPattern.meaning + ')을 자연스럽게 활용할 수 있는 일상 한국어 한 문장과 원어민 모범 답안을 만드세요.\nJSON 형식:\n{ "koreanSentence": "문장", "modelAnswer": "모범답안" }';
 
     try {
       const res = await callGeminiApi(apiKey, prompt);
       currentBlindData = {
-        patternId: randomPattern.id,
-        pattern: randomPattern.pattern,
-        meaning: randomPattern.meaning,
+        patternId: targetPattern.id,
+        pattern: targetPattern.pattern,
+        meaning: targetPattern.meaning,
         koreanSentence: res.koreanSentence,
         modelAnswer: res.modelAnswer
       };
@@ -896,6 +1119,8 @@
     const feedbackBoxId = isDrill ? 'feedbackTextDrill' : 'feedbackTextBlind';
     const containerId = isDrill ? 'feedbackContainerDrill' : 'feedbackContainerBlind';
     const submitBtnId = isDrill ? 'btnSubmitDrill' : 'btnSubmitBlind';
+    const recBoxId = isDrill ? 'nativeRecBoxDrill' : 'nativeRecBoxBlind';
+    const recTextId = isDrill ? 'nativeRecTextDrill' : 'nativeRecTextBlind';
 
     const uEl = document.getElementById(inputId);
     const userAns = uEl ? uEl.value.trim() : '';
@@ -931,6 +1156,19 @@
           '<div style="margin-top: 8px; font-weight: 700; color: #1e1b4b;">👉 네이티브 추천: <u>' + res.nativeExpression + '</u></div>';
       }
 
+      // Show native quick add card
+      if (res.nativeExpression) {
+        if (isDrill) latestNativeDrill = res.nativeExpression;
+        else latestNativeBlind = res.nativeExpression;
+
+        const rBox = document.getElementById(recBoxId);
+        const rTxt = document.getElementById(recTextId);
+        if (rBox && rTxt) {
+          rTxt.innerText = res.nativeExpression;
+          rBox.classList.remove('hidden');
+        }
+      }
+
       if (!res.isCorrect) {
         mistakes.unshift({
           id: Date.now().toString(),
@@ -950,6 +1188,7 @@
     }
   }
 
+  // Step 3: Snowball Logic
   function switchSnowballSubMode(mode) {
     snowballSubMode = mode;
     const b1 = document.getElementById('segBtn1');
@@ -1012,7 +1251,7 @@
 
     const apiKey = getStoredApiKey();
     if (!apiKey) {
-      document.getElementById('snowballKoreanText').innerText = '⚠️ 상단 [🔑 API Key 설정]을 눌러 API 키를 먼저 저장해주세요.';
+      document.getElementById('snowballKoreanText').innerText = '⚠️ 상단 [🔑 API Key]를 눌러 API 키를 먼저 저장해주세요.';
       const apiC = document.getElementById('apiConfig');
       if (apiC) apiC.classList.remove('hidden');
       return;
@@ -1109,7 +1348,7 @@
       }
 
       if (res.recommendedPattern) {
-        recommendedNewPattern = { pattern: res.recommendedPattern, meaning: res.recommendedPatternMeaning };
+        latestNativeSnowball = res.recommendedPattern;
         document.getElementById('recommendPatternTextSnowball').innerText = res.recommendedPattern;
         document.getElementById('recommendMeaningTextSnowball').innerText = res.recommendedPatternMeaning;
         const rA = document.getElementById('recommendAreaSnowball');
@@ -1123,20 +1362,8 @@
   }
 
   function addRecommendedPatternSnowball() {
-    if (!recommendedNewPattern) return;
-    if (patterns.some(p => p.pattern.toLowerCase() === recommendedNewPattern.pattern.toLowerCase())) {
-      return alert('이미 등록된 패턴입니다.');
-    }
-    patterns.push({
-      id: Date.now().toString(),
-      pattern: recommendedNewPattern.pattern,
-      meaning: recommendedNewPattern.meaning,
-      needDrill: true
-    });
-    localStorage.setItem('pr_patterns', JSON.stringify(patterns));
-    updateCounts();
-    renderPatternList();
-    alert('[' + recommendedNewPattern.pattern + '] 단어장에 추가되었습니다!');
+    if (!latestNativeSnowball) return;
+    addNativeToPatterns(latestNativeSnowball);
     const rA = document.getElementById('recommendAreaSnowball');
     if (rA) rA.classList.add('hidden');
   }
@@ -1283,10 +1510,10 @@
   }
 
   function exportData() {
-    const dataStr = JSON.stringify({ patterns: patterns, mistakes: mistakes }, null, 2);
+    const dataStr = JSON.stringify({ patterns: patterns, mistakes: mistakes, challengeConfig: challengeConfig }, null, 2);
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(dataStr).then(() => {
-        alert('📋 내 패턴 데이터가 복사되었습니다!\n다른 기기에서 [가져오기]를 진행하세요.');
+        alert('📋 내 패턴 데이터 및 챌린지 설정이 복사되었습니다!\n다른 기기에서 [가져오기]를 진행하세요.');
       }).catch(() => prompt('아래 데이터를 복사하세요:', dataStr));
     } else {
       prompt('아래 데이터를 복사하세요:', dataStr);
@@ -1307,6 +1534,11 @@
           }
         });
         localStorage.setItem('pr_patterns', JSON.stringify(patterns));
+        if (parsed.challengeConfig) {
+          challengeConfig = Object.assign(challengeConfig, parsed.challengeConfig);
+          localStorage.setItem('pr_challenge_cfg', JSON.stringify(challengeConfig));
+          updateChallengeUI();
+        }
         updateCounts();
         renderPatternList();
         if (iEl) iEl.value = '';
@@ -1331,6 +1563,11 @@
     bindClick('btnCloseApi', toggleApiSettings);
     bindClick('btnTestApi', testAndSaveApiKey);
 
+    bindClick('btnOpenSettings', toggleSettingsConfig);
+    bindClick('btnCloseSettings', toggleSettingsConfig);
+    bindClick('btnSaveSettings', saveChallengeSettings);
+    bindClick('btnNextDayShortcut', nextDayShortcut);
+
     bindClick('stgBtn1', () => switchMainStage('1'));
     bindClick('stgBtn2', () => switchMainStage('2'));
     bindClick('stgBtn3', () => switchMainStage('3'));
@@ -1341,13 +1578,17 @@
     bindClick('bBtn4', () => switchBottomMenu('sync'));
 
     bindClick('btnSubmitDrill', () => submitAnswer('drill'));
-    bindClick('btnNextDrill', loadNextDrill);
+    bindClick('btnNextDrill', () => loadNextDrill());
+    bindClick('btnRefreshDrill', () => loadNextDrill(currentDrillData ? { id: currentDrillData.patternId, pattern: currentDrillData.pattern, meaning: currentDrillData.meaning } : null));
     bindClick('btnReDrill1', () => markForReDrill(currentDrillData ? currentDrillData.patternId : null));
+    bindClick('btnAddNativeDrill', () => addNativeToPatterns(latestNativeDrill));
 
     bindClick('btnHint', revealHint);
     bindClick('btnSubmitBlind', () => submitAnswer('blind'));
-    bindClick('btnNextBlind', loadNextBlind);
+    bindClick('btnNextBlind', () => loadNextBlind());
+    bindClick('btnRefreshBlind', () => loadNextBlind(currentBlindData ? { id: currentBlindData.patternId, pattern: currentBlindData.pattern, meaning: currentBlindData.meaning } : null));
     bindClick('btnReDrill2', () => markForReDrill(currentBlindData ? currentBlindData.patternId : null));
+    bindClick('btnAddNativeBlind', () => addNativeToPatterns(latestNativeBlind));
 
     bindClick('segBtn1', () => switchSnowballSubMode('paragraph'));
     bindClick('segBtn2', () => switchSnowballSubMode('free'));
@@ -1386,6 +1627,7 @@
   function init() {
     patterns.forEach(p => { if (typeof p.needDrill !== 'boolean') p.needDrill = true; });
     updateCounts();
+    updateChallengeUI();
     checkApiKeyUI();
     renderPatternList();
     renderMistakes();
@@ -1394,7 +1636,7 @@
 
     const savedKey = getStoredApiKey();
     if (!savedKey) {
-      document.getElementById('currentKoreanSentence').innerText = '⚠️ 상단 [🔑 API Key 설정]을 눌러 API 키를 먼저 저장해주세요.';
+      document.getElementById('currentKoreanSentence').innerText = '⚠️ 상단 [🔑 API Key]를 눌러 API 키를 먼저 저장해주세요.';
       const apiC = document.getElementById('apiConfig');
       if (apiC) apiC.classList.remove('hidden');
     } else {
